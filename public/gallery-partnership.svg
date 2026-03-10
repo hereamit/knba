@@ -1,0 +1,27 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="#EEF3FF"/>
+  <rect x="130" y="144" width="1340" height="812" rx="40" fill="url(#bg)"/>
+  <rect x="192" y="248" width="1216" height="600" rx="28" fill="#F9FBFF"/>
+  <rect x="300" y="328" width="1000" height="152" rx="20" fill="#EAF0FF"/>
+  <rect x="300" y="532" width="1000" height="152" rx="20" fill="#EAF0FF"/>
+  <circle cx="428" cy="404" r="44" fill="#F7C4A8"/>
+  <circle cx="578" cy="404" r="44" fill="#F7C4A8"/>
+  <circle cx="726" cy="404" r="44" fill="#F7C4A8"/>
+  <circle cx="873" cy="404" r="44" fill="#F7C4A8"/>
+  <circle cx="1020" cy="404" r="44" fill="#F7C4A8"/>
+  <circle cx="1166" cy="404" r="44" fill="#F7C4A8"/>
+  <path d="M392 494C392 447.98 429.98 410 476 410C522.02 410 560 447.98 560 494V540H392V494Z" fill="#273C75"/>
+  <path d="M540 494C540 447.98 577.98 410 624 410C670.02 410 708 447.98 708 494V540H540V494Z" fill="#EB2F06"/>
+  <path d="M688 494C688 447.98 725.98 410 772 410C818.02 410 856 447.98 856 494V540H688V494Z" fill="#1E3799"/>
+  <path d="M836 494C836 447.98 873.98 410 920 410C966.02 410 1004 447.98 1004 494V540H836V494Z" fill="#273C75"/>
+  <path d="M984 494C984 447.98 1021.98 410 1068 410C1114.02 410 1152 447.98 1152 494V540H984V494Z" fill="#EB2F06"/>
+  <path d="M1132 494C1132 447.98 1169.98 410 1216 410C1262.02 410 1300 447.98 1300 494V540H1132V494Z" fill="#1E3799"/>
+  <text x="222" y="232" fill="white" font-family="Georgia, serif" font-size="66" font-weight="700">Partnership Session</text>
+  <text x="224" y="778" fill="#273C75" font-family="Segoe UI, Arial" font-size="30">Meeting with stakeholders and service partners for market improvements.</text>
+  <defs>
+    <linearGradient id="bg" x1="134" y1="150" x2="1422" y2="922" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#273C75"/>
+      <stop offset="1" stop-color="#7B8FD3"/>
+    </linearGradient>
+  </defs>
+</svg>

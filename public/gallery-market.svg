@@ -1,0 +1,29 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="url(#bg)"/>
+  <rect y="760" width="1600" height="340" fill="#172447"/>
+  <rect x="110" y="380" width="280" height="380" rx="18" fill="#304D8E"/>
+  <rect x="430" y="300" width="270" height="460" rx="18" fill="#203664"/>
+  <rect x="735" y="255" width="315" height="505" rx="18" fill="#3958A8"/>
+  <rect x="1085" y="340" width="280" height="420" rx="18" fill="#203664"/>
+  <rect x="114" y="454" width="272" height="52" fill="#EB2F06"/>
+  <rect x="438" y="392" width="254" height="42" fill="#F0B53A"/>
+  <rect x="748" y="362" width="289" height="56" fill="#EB2F06"/>
+  <rect x="1096" y="430" width="258" height="48" fill="#F0B53A"/>
+  <circle cx="428" cy="830" r="54" fill="#F7C4A8"/>
+  <circle cx="585" cy="830" r="54" fill="#F7C4A8"/>
+  <circle cx="742" cy="830" r="54" fill="#F7C4A8"/>
+  <circle cx="899" cy="830" r="54" fill="#F7C4A8"/>
+  <path d="M374 960C374 901.458 421.458 854 480 854C538.542 854 586 901.458 586 960V1010H374V960Z" fill="#EB2F06"/>
+  <path d="M531 960C531 901.458 578.458 854 637 854C695.542 854 743 901.458 743 960V1010H531V960Z" fill="#273C75"/>
+  <path d="M688 960C688 901.458 735.458 854 794 854C852.542 854 900 901.458 900 960V1010H688V960Z" fill="#F0B53A"/>
+  <path d="M845 960C845 901.458 892.458 854 951 854C1009.54 854 1057 901.458 1057 960V1010H845V960Z" fill="#1E3799"/>
+  <text x="122" y="152" fill="white" font-family="Georgia, serif" font-size="72" font-weight="700">Market Coordination</text>
+  <text x="124" y="222" fill="white" font-family="Segoe UI, Arial" font-size="30">Shops, committees, and merchants working together in New Road.</text>
+  <defs>
+    <linearGradient id="bg" x1="160" y1="82" x2="1420" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3799"/>
+      <stop offset="0.6" stop-color="#273C75"/>
+      <stop offset="1" stop-color="#EB2F06"/>
+    </linearGradient>
+  </defs>
+</svg>

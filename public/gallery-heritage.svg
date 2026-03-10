@@ -1,0 +1,23 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="#FAF5F0"/>
+  <circle cx="1312" cy="246" r="176" fill="#FFE3D9"/>
+  <rect x="128" y="146" width="1344" height="808" rx="40" fill="url(#bg)"/>
+  <path d="M188 720C320 610 468 552 632 546C762 542 862 576 1008 594C1127 609 1258 588 1394 528V874H188V720Z" fill="#D2A36C"/>
+  <rect x="268" y="404" width="224" height="314" rx="20" fill="#D98A4E"/>
+  <rect x="548" y="340" width="254" height="378" rx="20" fill="#BE6A3C"/>
+  <rect x="866" y="280" width="274" height="438" rx="20" fill="#D98A4E"/>
+  <rect x="1190" y="370" width="176" height="348" rx="20" fill="#BE6A3C"/>
+  <path d="M268 404H492L380 304L268 404Z" fill="#6F3D28"/>
+  <path d="M548 340H802L675 238L548 340Z" fill="#6F3D28"/>
+  <path d="M866 280H1140L1003 172L866 280Z" fill="#6F3D28"/>
+  <path d="M1190 370H1366L1278 292L1190 370Z" fill="#6F3D28"/>
+  <text x="220" y="228" fill="white" font-family="Georgia, serif" font-size="68" font-weight="700">New Road Heritage Walk</text>
+  <text x="222" y="842" fill="white" font-family="Segoe UI, Arial" font-size="30">Celebrating commerce, architecture, and the identity of the area.</text>
+  <defs>
+    <linearGradient id="bg" x1="140" y1="154" x2="1410" y2="892" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8D4F31"/>
+      <stop offset="0.6" stop-color="#B8653A"/>
+      <stop offset="1" stop-color="#273C75"/>
+    </linearGradient>
+  </defs>
+</svg>

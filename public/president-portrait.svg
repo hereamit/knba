@@ -1,0 +1,20 @@
+<svg width="900" height="1100" viewBox="0 0 900 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1100" rx="48" fill="#F7F9FF"/>
+  <rect x="70" y="70" width="760" height="960" rx="40" fill="url(#bg)"/>
+  <circle cx="450" cy="340" r="118" fill="#F6D4C0"/>
+  <path d="M333 300C333 235.382 385.382 183 450 183C514.618 183 567 235.382 567 300V384H333V300Z" fill="#16213F"/>
+  <path d="M275 846C275 688.542 402.542 561 560 561H340C497.458 561 625 688.542 625 846V930H275V846Z" fill="#F8F8FA"/>
+  <path d="M352 560L450 650L548 560V930H352V560Z" fill="#EB2F06"/>
+  <path d="M360 560H540V930H360V560Z" fill="#1E3799"/>
+  <path d="M356 511C380 556 520 556 545 511L566 613H334L356 511Z" fill="#F0B7A3"/>
+  <rect x="126" y="126" width="252" height="72" rx="22" fill="white" fill-opacity="0.24"/>
+  <text x="154" y="171" fill="white" font-family="Segoe UI, Arial" font-size="28" font-weight="700">Current President</text>
+  <text x="130" y="980" fill="white" font-family="Georgia, serif" font-size="40" font-weight="700">Leadership &amp; Service</text>
+  <defs>
+    <linearGradient id="bg" x1="118" y1="118" x2="756" y2="982" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#273C75"/>
+      <stop offset="0.55" stop-color="#1E3799"/>
+      <stop offset="1" stop-color="#7B8FD3"/>
+    </linearGradient>
+  </defs>
+</svg>

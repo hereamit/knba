@@ -1,0 +1,16 @@
+<svg width="800" height="900" viewBox="0 0 800 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="900" rx="40" fill="#EEF3FF"/>
+  <rect x="60" y="60" width="680" height="780" rx="32" fill="url(#bg)"/>
+  <circle cx="402" cy="288" r="108" fill="#F2C3AA"/>
+  <path d="M294 268C294 208.353 342.353 160 402 160C461.647 160 510 208.353 510 268V338H294V268Z" fill="#243A73"/>
+  <path d="M242 690C242 571.811 337.811 476 456 476H344C462.189 476 558 571.811 558 690V756H242V690Z" fill="#E7EEFf"/>
+  <path d="M318 468L402 548L486 468V756H318V468Z" fill="#1E3799"/>
+  <text x="96" y="140" fill="white" font-family="Segoe UI, Arial" font-size="28" font-weight="700">Vice-President</text>
+  <text x="96" y="786" fill="white" font-family="Georgia, serif" font-size="40" font-weight="700">Member Coordination</text>
+  <defs>
+    <linearGradient id="bg" x1="86" y1="86" x2="714" y2="782" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3799"/>
+      <stop offset="1" stop-color="#6B86D7"/>
+    </linearGradient>
+  </defs>
+</svg>

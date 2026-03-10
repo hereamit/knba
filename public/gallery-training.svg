@@ -1,0 +1,26 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="#F7F9FF"/>
+  <rect x="110" y="138" width="1380" height="824" rx="42" fill="url(#bg)"/>
+  <rect x="220" y="255" width="1160" height="510" rx="28" fill="#EAF0FF"/>
+  <rect x="260" y="300" width="700" height="372" rx="22" fill="#273C75"/>
+  <rect x="999" y="300" width="280" height="372" rx="22" fill="#FFFFFF"/>
+  <rect x="1030" y="346" width="218" height="26" rx="13" fill="#DCE4FF"/>
+  <rect x="1030" y="400" width="180" height="22" rx="11" fill="#FFD5C7"/>
+  <rect x="1030" y="452" width="205" height="22" rx="11" fill="#DCE4FF"/>
+  <rect x="1030" y="504" width="150" height="22" rx="11" fill="#FFD5C7"/>
+  <rect x="1030" y="556" width="195" height="22" rx="11" fill="#DCE4FF"/>
+  <circle cx="430" cy="832" r="48" fill="#F7C4A8"/>
+  <circle cx="592" cy="832" r="48" fill="#F7C4A8"/>
+  <circle cx="753" cy="832" r="48" fill="#F7C4A8"/>
+  <path d="M386 936C386 882.98 428.98 840 482 840C535.02 840 578 882.98 578 936V984H386V936Z" fill="#EB2F06"/>
+  <path d="M548 936C548 882.98 590.98 840 644 840C697.02 840 740 882.98 740 936V984H548V936Z" fill="#273C75"/>
+  <path d="M709 936C709 882.98 751.98 840 805 840C858.02 840 901 882.98 901 936V984H709V936Z" fill="#1E3799"/>
+  <text x="224" y="220" fill="white" font-family="Georgia, serif" font-size="68" font-weight="700">Training &amp; Awareness</text>
+  <text x="226" y="798" fill="#273C75" font-family="Segoe UI, Arial" font-size="30">Workshops that help merchants adapt and improve operations.</text>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="146" x2="1442" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3799"/>
+      <stop offset="1" stop-color="#EB2F06"/>
+    </linearGradient>
+  </defs>
+</svg>

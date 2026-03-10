@@ -1,0 +1,16 @@
+<svg width="800" height="900" viewBox="0 0 800 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="900" rx="40" fill="#EAF0FF"/>
+  <rect x="60" y="60" width="680" height="780" rx="32" fill="url(#bg)"/>
+  <circle cx="400" cy="285" r="110" fill="#F4C7AE"/>
+  <path d="M285 268C285 204.487 336.487 153 400 153C463.513 153 515 204.487 515 268V344H285V268Z" fill="#16213F"/>
+  <path d="M222 690C222 562.975 324.975 460 452 460H348C475.025 460 578 562.975 578 690V760H222V690Z" fill="#273C75"/>
+  <path d="M318 448C342 492 459 494 484 448L504 540H296L318 448Z" fill="#EDB79B"/>
+  <text x="96" y="140" fill="white" font-family="Segoe UI, Arial" font-size="28" font-weight="700">President</text>
+  <text x="96" y="786" fill="white" font-family="Georgia, serif" font-size="42" font-weight="700">KNBA Leadership</text>
+  <defs>
+    <linearGradient id="bg" x1="92" y1="86" x2="700" y2="788" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#273C75"/>
+      <stop offset="1" stop-color="#1E3799"/>
+    </linearGradient>
+  </defs>
+</svg>

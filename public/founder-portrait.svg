@@ -1,0 +1,17 @@
+<svg width="900" height="1100" viewBox="0 0 900 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1100" rx="48" fill="#EAF0FF"/>
+  <rect x="70" y="70" width="760" height="960" rx="40" fill="url(#bg)"/>
+  <circle cx="450" cy="345" r="122" fill="#FAD7C7"/>
+  <path d="M308 324C308 242.262 374.262 176 456 176C537.738 176 604 242.262 604 324V392H308V324Z" fill="#273C75"/>
+  <path d="M278 850C278 692.542 405.542 565 563 565H337C494.458 565 622 692.542 622 850V930H278V850Z" fill="#273C75"/>
+  <path d="M352 514C377 561 525 565 548 510L572 625H329L352 514Z" fill="#F5B9A4"/>
+  <rect x="128" y="126" width="222" height="72" rx="22" fill="white" fill-opacity="0.2"/>
+  <text x="156" y="171" fill="white" font-family="Segoe UI, Arial" font-size="28" font-weight="700">Founding Vision</text>
+  <text x="132" y="980" fill="white" font-family="Georgia, serif" font-size="40" font-weight="700">KNBA Founder</text>
+  <defs>
+    <linearGradient id="bg" x1="138" y1="118" x2="744" y2="1008" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3799"/>
+      <stop offset="1" stop-color="#EB2F06"/>
+    </linearGradient>
+  </defs>
+</svg>

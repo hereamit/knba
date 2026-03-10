@@ -1,0 +1,21 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="#EEF3FF"/>
+  <circle cx="1310" cy="212" r="190" fill="#FFD5C7"/>
+  <circle cx="260" cy="932" r="210" fill="#D9E3FF"/>
+  <rect x="130" y="170" width="1340" height="720" rx="40" fill="url(#bg)"/>
+  <path d="M235 698C312 624.667 382 588 445 588C539.5 588 598.5 676 705 676C817.5 676 865 558 998 558C1094 558 1180 640 1256 760" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="424" cy="492" r="72" fill="#F8C8B2"/>
+  <circle cx="712" cy="438" r="72" fill="#F8C8B2"/>
+  <circle cx="995" cy="484" r="72" fill="#F8C8B2"/>
+  <path d="M344 762C344 677.5 412.5 609 497 609H352C436.5 609 505 677.5 505 762V842H344V762Z" fill="#273C75"/>
+  <path d="M632 762C632 677.5 700.5 609 785 609H640C724.5 609 793 677.5 793 762V842H632V762Z" fill="#EB2F06"/>
+  <path d="M915 762C915 677.5 983.5 609 1068 609H923C1007.5 609 1076 677.5 1076 762V842H915V762Z" fill="#1E3799"/>
+  <text x="214" y="292" fill="white" font-family="Georgia, serif" font-size="70" font-weight="700">Community Outreach</text>
+  <text x="214" y="360" fill="white" font-family="Segoe UI, Arial" font-size="30">Programs that connect merchants, visitors, and the neighborhood.</text>
+  <defs>
+    <linearGradient id="bg" x1="238" y1="194" x2="1272" y2="848" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#273C75"/>
+      <stop offset="1" stop-color="#1E3799"/>
+    </linearGradient>
+  </defs>
+</svg>
