@@ -2,6 +2,7 @@ export const siteNavItems = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Member", href: "/member" },
+  { label: "Business Showcase", href: "/business-showcase" },
   { label: "Services", href: "/services" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
@@ -213,6 +214,110 @@ export const supportSteps = [
   },
 ];
 
+export type BusinessShowcaseItem = {
+  name: string;
+  category: string;
+  description: string;
+  phone: string;
+  address: string;
+  image: string;
+  badge: string;
+  websiteUrl?: string;
+  socialLinks?: { label: string; href: string }[];
+  featured?: boolean;
+};
+
+export const businessShowcaseItems: BusinessShowcaseItem[] = [
+  {
+    name: "New Road Fashion House",
+    category: "Retail Apparel",
+    description:
+      "A busy New Road clothing store offering seasonal collections, wholesale support, and festival promotions for local shoppers.",
+    phone: "+977-9801200101",
+    address: "Khichapokhari, New Road, Kathmandu",
+    image: "/business/fashion-house.jpg",
+    badge: "Featured Sponsor",
+    websiteUrl: "https://newroadfashion.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/newroadfashionhouse" },
+      { label: "Instagram", href: "https://instagram.com/newroadfashionhouse" },
+    ],
+    featured: true,
+  },
+  {
+    name: "Kathmandu Digital Traders",
+    category: "Electronics",
+    description:
+      "A member business focused on mobile accessories, gadgets, and after-sales support with competitive city-center pricing.",
+    phone: "+977-9801200102",
+    address: "Bishal Bazaar Side, New Road, Kathmandu",
+    image: "/business/digital-traders.jpg",
+    badge: "Business Showcase",
+    websiteUrl: "https://kathmandudigital.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/kathmandudigitaltraders" },
+    ],
+  },
+  {
+    name: "Milan Jewellery Center",
+    category: "Jewellery & Accessories",
+    description:
+      "Trusted local jewellery and gift retailer serving walk-in customers and repeat family shoppers from across Kathmandu.",
+    phone: "+977-9801200103",
+    address: "Khichapokhari Chowk, Kathmandu",
+    image: "/business/jewellery-center.jpg",
+    badge: "Member Business",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/milanjewellerycenter" },
+      { label: "Instagram", href: "https://instagram.com/milanjewellerycenter" },
+    ],
+  },
+  {
+    name: "Himal Trade Suppliers",
+    category: "Wholesale Supply",
+    description:
+      "A wholesale trading business connecting merchants with packaging materials, shop supplies, and fast restocking support.",
+    phone: "+977-9801200104",
+    address: "New Road Core Market, Kathmandu",
+    image: "/business/trade-suppliers.jpg",
+    badge: "Featured Sponsor",
+    websiteUrl: "https://himaltrade.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/himaltradesuppliers" },
+      { label: "Shop", href: "https://shop.himaltrade.example.com" },
+    ],
+    featured: true,
+  },
+  {
+    name: "Bagmati Footwear Point",
+    category: "Footwear",
+    description:
+      "A showroom-style footwear outlet with casual, formal, and seasonal inventory for daily retail and festive demand.",
+    phone: "+977-9801200105",
+    address: "Near Juddha Salik, New Road, Kathmandu",
+    image: "/business/footwear-point.jpg",
+    badge: "Business Showcase",
+    websiteUrl: "https://bagmatifootwear.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/bagmatifootwearpoint" },
+      { label: "Shop", href: "https://shop.bagmatifootwear.example.com" },
+    ],
+  },
+  {
+    name: "Heritage Gift & Stationery",
+    category: "Gift & Stationery",
+    description:
+      "A small but visible market business offering school, office, and gift products with dependable local customer service.",
+    phone: "+977-9801200106",
+    address: "Khichapokhari Lane, Kathmandu",
+    image: "/business/gift-stationery.jpg",
+    badge: "Member Business",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/heritagegiftstationery" },
+    ],
+  },
+];
+
 export type GalleryItem = {
   src: string;
   title: string;
@@ -302,103 +407,248 @@ export const officeHours = [
 ];
 
 export type MemberProfile = {
+  order: number;
   name: string;
   role: string;
-  phone: string;
-  email: string;
   photo: string;
+  note?: string;
 };
 
 export const executiveMembers: MemberProfile[] = [
   {
-    name: "Ramesh Shrestha",
+    order: 1,
+    name: "Sagar Shakya",
     role: "President",
-    phone: "+977-9801000101",
-    email: "president@knba.org.np",
     photo: "/people/president.jpg",
   },
   {
-    name: "Sushil Tuladhar",
-    role: "Vice-President",
-    phone: "+977-9801000102",
-    email: "vicepresident@knba.org.np",
+    order: 2,
+    name: "Rajendra Baran",
+    role: "Founding President",
     photo: "/people/vice-president.jpg",
   },
   {
-    name: "Anita Maharjan",
-    role: "Secretariat",
-    phone: "+977-9801000103",
-    email: "secretariat@knba.org.np",
+    order: 3,
+    name: "Gautam Kumar Shakya",
+    role: "Immediate Past President",
     photo: "/people/secretariat.jpg",
   },
-];
-
-export const advisoryMembers: MemberProfile[] = [
   {
-    name: "Prakash Manandhar",
-    role: "Advisory Board",
-    phone: "+977-9801000201",
-    email: "prakash@knba.org.np",
+    order: 4,
+    name: "Manoj Babu Shrestha",
+    role: "Past President",
     photo: "/people/advisory-1.jpg",
   },
   {
-    name: "Bina Kansakar",
-    role: "Advisory Board",
-    phone: "+977-9801000202",
-    email: "bina@knba.org.np",
+    order: 5,
+    name: "Gaur Gupta Khadgi",
+    role: "Senior Vice President",
     photo: "/people/advisory-2.jpg",
   },
   {
-    name: "Sanjeev Rajbhandari",
-    role: "Advisory Board",
-    phone: "+977-9801000203",
-    email: "sanjeev@knba.org.np",
+    order: 6,
+    name: "Tej Prasad Jawali",
+    role: "First Vice President",
     photo: "/people/advisory-3.jpg",
+  },
+  {
+    order: 7,
+    name: "Dipak Kumar Shrestha",
+    role: "Second Vice President",
+    photo: "/people/member-1.jpg",
+  },
+  {
+    order: 8,
+    name: "Ravi Ladhuru Shyam Chhetri",
+    role: "General Secretary",
+    photo: "/people/member-2.jpg",
+  },
+  {
+    order: 9,
+    name: "Dil Bahadur Rokka",
+    role: "Secretary",
+    photo: "/people/member-3.jpg",
+  },
+  {
+    order: 10,
+    name: "Pramod Mandali",
+    role: "Treasurer",
+    photo: "/people/member-4.jpg",
+  },
+  {
+    order: 11,
+    name: "Budh Bahadur Thapa Magar",
+    role: "Joint Treasurer",
+    photo: "/people/member-5.jpg",
   },
 ];
 
 export const committeeMembers: MemberProfile[] = [
   {
-    name: "Nabin Shakya",
-    role: "Executive Member",
-    phone: "+977-9801000301",
-    email: "nabin@knba.org.np",
+    order: 12,
+    name: "Suresh Ratna Shakya",
+    role: "Executive Committee Member",
+    photo: "/people/member-6.jpg",
+  },
+  {
+    order: 13,
+    name: "Sudhamani Mandali",
+    role: "Executive Committee Member",
+    photo: "/people/president.jpg",
+  },
+  {
+    order: 14,
+    name: "Sanjay Raj Subedi",
+    role: "Executive Committee Member",
+    photo: "/people/vice-president.jpg",
+  },
+  {
+    order: 15,
+    name: "Ranjit Maharti",
+    role: "Executive Committee Member",
+    photo: "/people/secretariat.jpg",
+  },
+  {
+    order: 16,
+    name: "Tilak Prasad Ojha",
+    role: "Executive Committee Member",
+    photo: "/people/advisory-1.jpg",
+  },
+  {
+    order: 17,
+    name: "Krishna Thigre",
+    role: "Executive Committee Member",
+    photo: "/people/advisory-2.jpg",
+  },
+  {
+    order: 18,
+    name: "Shailendra Shah",
+    role: "Executive Committee Member",
+    photo: "/people/advisory-3.jpg",
+  },
+  {
+    order: 19,
+    name: "Ghan Prasad Poudel",
+    role: "Executive Committee Member",
     photo: "/people/member-1.jpg",
   },
   {
-    name: "Pramila Joshi",
-    role: "Executive Member",
-    phone: "+977-9801000302",
-    email: "pramila@knba.org.np",
+    order: 20,
+    name: "Arjun Shah",
+    role: "Executive Committee Member",
     photo: "/people/member-2.jpg",
   },
   {
-    name: "Deepak Shrestha",
-    role: "Executive Member",
-    phone: "+977-9801000303",
-    email: "deepak@knba.org.np",
+    order: 21,
+    name: "Gangu Shrestha",
+    role: "Executive Committee Member",
     photo: "/people/member-3.jpg",
   },
   {
-    name: "Sarita Bajracharya",
-    role: "Executive Member",
-    phone: "+977-9801000304",
-    email: "sarita@knba.org.np",
+    order: 22,
+    name: "Prakash Dhakal",
+    role: "Executive Committee Member",
     photo: "/people/member-4.jpg",
   },
   {
-    name: "Milan Tuladhar",
-    role: "Executive Member",
-    phone: "+977-9801000305",
-    email: "milan@knba.org.np",
+    order: 23,
+    name: "Shobha Sthapit",
+    role: "Executive Committee Member",
     photo: "/people/member-5.jpg",
   },
   {
-    name: "Rita Maharjan",
-    role: "Executive Member",
-    phone: "+977-9801000306",
-    email: "rita@knba.org.np",
+    order: 24,
+    name: "Bishnu Maya Khadgi",
+    role: "Executive Committee Member",
     photo: "/people/member-6.jpg",
+  },
+  {
+    order: 25,
+    name: "Manoj Mandali",
+    role: "Executive Committee Member",
+    photo: "/people/president.jpg",
+  },
+];
+
+export const advisoryMembers: MemberProfile[] = [
+  {
+    order: 26,
+    name: "Rajen Dangol",
+    role: "Advisor",
+    photo: "/people/advisory-1.jpg",
+    note: "Chairperson, Khichapokhari Foot Sale",
+  },
+  {
+    order: 27,
+    name: "Janga Bahadur Shrestha",
+    role: "Advisor",
+    photo: "/people/advisory-2.jpg",
+  },
+  {
+    order: 28,
+    name: "Krishna Prasad",
+    role: "Advisor",
+    photo: "/people/advisory-3.jpg",
+  },
+  {
+    order: 29,
+    name: "Charan Prakash Pradhan",
+    role: "Advisor",
+    photo: "/people/member-1.jpg",
+  },
+  {
+    order: 30,
+    name: "Arjun Jawali",
+    role: "Advisor",
+    photo: "/people/member-2.jpg",
+  },
+  {
+    order: 31,
+    name: "Ram Kumar Pandit",
+    role: "Advisor",
+    photo: "/people/member-3.jpg",
+  },
+  {
+    order: 32,
+    name: "Krishna Prasad Khanal",
+    role: "Advisor",
+    photo: "/people/member-4.jpg",
+  },
+  {
+    order: 33,
+    name: "Gopal Prasad Shrestha",
+    role: "Advisor",
+    photo: "/people/member-5.jpg",
+  },
+  {
+    order: 34,
+    name: "Jit Narayan Dangol",
+    role: "Advisor",
+    photo: "/people/member-6.jpg",
+  },
+  {
+    order: 35,
+    name: "Mitra Poudel",
+    role: "Advisor",
+    photo: "/people/president.jpg",
+  },
+  {
+    order: 36,
+    name: "Balaram Acharya",
+    role: "Advisor",
+    photo: "/people/vice-president.jpg",
+  },
+  {
+    order: 37,
+    name: "Ram Prasad Barnaliya",
+    role: "Advisor",
+    photo: "/people/secretariat.jpg",
+  },
+  {
+    order: 38,
+    name: "Ram Bahadur Sundel",
+    role: "Legal Advisor",
+    photo: "/people/advisory-1.jpg",
   },
 ];
 
@@ -406,6 +656,8 @@ export const adminNavItems = [
   { label: "Dashboard", href: "/admin", icon: "◫" },
   { label: "Members", href: "/admin/members", icon: "◎" },
   { label: "Events", href: "/admin/events", icon: "◉" },
+  { label: "Business Showcase", href: "/admin/business-showcase", icon: "▤" },
+  { label: "Organization Profile", href: "/admin/organization-profile", icon: "◌" },
   { label: "Gallery", href: "/admin/gallery", icon: "▣" },
   { label: "Messages", href: "/admin/messages", icon: "✉" },
   { label: "Settings", href: "/admin/settings", icon: "⚙" },

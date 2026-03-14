@@ -2,10 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { apiRequest, storeAdminSession, type AdminSession } from "@/lib/api";
+import { moveToNextFormField, resetEnterNavigationState } from "@/lib/enter-navigation";
 
 export function AdminLoginForm() {
   const router = useRouter();
+  const { profile } = useOrganizationProfile();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [login, setLogin] = useState("admin@knba.org.np");
@@ -14,11 +17,13 @@ export function AdminLoginForm() {
   return (
     <div className="w-full max-w-md">
       <h1 className="text-3xl font-bold text-primary">
-        Sign in to the admin dashboard.
+        Sign in to the {profile.short_name} admin dashboard.
       </h1>
 
       <form
         className="mt-6 space-y-5"
+        onKeyDown={moveToNextFormField}
+        onBlurCapture={resetEnterNavigationState}
         onSubmit={async (event) => {
           event.preventDefault();
           setSubmitting(true);

@@ -33,6 +33,7 @@ export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
               src={slide.image}
               alt={slide.title}
               fill
+              unoptimized
               className="object-cover"
               priority={index === 0}
             />
@@ -48,7 +49,7 @@ export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-lg font-semibold text-primary transition hover:bg-surface-muted"
           aria-label="Previous slide"
         >
-          ←
+          {"\u2190"}
         </button>
         <div className="flex items-center gap-2">
           {slides.map((slide, dotIndex) => (
@@ -69,7 +70,7 @@ export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-lg font-semibold text-primary transition hover:bg-surface-muted"
           aria-label="Next slide"
         >
-          →
+          {"\u2192"}
         </button>
       </div>
     </div>

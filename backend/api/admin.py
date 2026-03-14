@@ -1,11 +1,15 @@
 from django.contrib import admin
 
 from .models import (
+    BusinessShowcaseItem,
+    BusinessShowcaseSubmission,
+    CommitteeTerm,
     ContactSubmission,
     Event,
     GalleryItem,
     HeroSlide,
     MemberProfile,
+    OrganizationProfile,
     ServiceItem,
     SiteSettings,
 )
@@ -14,6 +18,18 @@ from .models import (
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     list_display = ("short_name", "office_phone", "office_email", "updated_at")
+
+
+@admin.register(OrganizationProfile)
+class OrganizationProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "short_name",
+        "organization_name",
+        "phone_number",
+        "email",
+        "is_active",
+        "updated_at",
+    )
 
 
 @admin.register(HeroSlide)
@@ -30,18 +46,60 @@ class ServiceItemAdmin(admin.ModelAdmin):
     search_fields = ("title", "description")
 
 
+@admin.register(CommitteeTerm)
+class CommitteeTermAdmin(admin.ModelAdmin):
+    list_display = ("label", "start_year", "end_year", "display_order", "is_current", "is_active")
+    list_filter = ("is_current", "is_active")
+    search_fields = ("label",)
+
+
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    list_display = ("name", "role", "category", "phone", "email", "is_active")
-    list_filter = ("category", "is_active")
-    search_fields = ("name", "role", "email")
+    list_display = ("name", "term", "role", "category", "phone", "email", "display_order", "is_active")
+    list_filter = ("term", "category", "is_active")
+    search_fields = ("name", "role", "email", "phone")
 
 
 @admin.register(GalleryItem)
 class GalleryItemAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "display_order", "is_active")
-    list_filter = ("category", "is_active")
+    list_display = (
+        "title",
+        "category",
+        "is_featured",
+        "show_in_slider",
+        "display_order",
+        "is_active",
+    )
+    list_filter = ("category", "is_featured", "show_in_slider", "is_active")
     search_fields = ("title", "description")
+
+
+@admin.register(BusinessShowcaseItem)
+class BusinessShowcaseItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "category",
+        "badge",
+        "is_featured",
+        "display_order",
+        "is_active",
+    )
+    list_filter = ("category", "badge", "is_featured", "is_active")
+    search_fields = ("name", "category", "phone", "address")
+
+
+@admin.register(BusinessShowcaseSubmission)
+class BusinessShowcaseSubmissionAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "submitter_name",
+        "category",
+        "review_status",
+        "published_item",
+        "created_at",
+    )
+    list_filter = ("review_status", "category", "created_at")
+    search_fields = ("name", "submitter_name", "submitter_email", "phone", "address")
 
 
 @admin.register(Event)

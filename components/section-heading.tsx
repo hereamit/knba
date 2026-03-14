@@ -1,7 +1,7 @@
 type SectionHeadingProps = {
   eyebrow: string;
   title: string;
-  description: string;
+  description?: string;
   light?: boolean;
 };
 
@@ -27,13 +27,15 @@ export function SectionHeading({
       >
         {title}
       </h1>
-      <p
-        className={`mt-5 text-base leading-8 ${
-          light ? "text-white/76" : "text-muted"
-        }`}
-      >
-        {description}
-      </p>
+      {description ? (
+        <p
+          className={`mt-5 text-base leading-8 ${
+            light ? "text-white/76" : "text-muted"
+          }`}
+        >
+          {description}
+        </p>
+      ) : null}
     </div>
   );
 }

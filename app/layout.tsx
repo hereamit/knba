@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Merriweather, Source_Sans_3 } from "next/font/google";
+import { OrganizationProfileProvider } from "@/components/organization-profile-provider";
 import "./globals.css";
+
+const sourceSans = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-source-sans",
+});
+
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  variable: "--font-merriweather",
+  weight: ["400", "700"],
+});
 
 export const metadata: Metadata = {
   title: "KNBA | Khichapokhari Newroad Business Association",
@@ -14,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${sourceSans.variable} ${merriweather.variable}`}>
+        <OrganizationProfileProvider>{children}</OrganizationProfileProvider>
+      </body>
     </html>
   );
 }

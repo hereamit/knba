@@ -5,14 +5,14 @@ import { serviceHighlights, supportSteps } from "@/lib/site-data";
 export default function ServicesPage() {
   return (
     <div className="section-wrap py-8 md:py-12">
-      <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#ffffff,#eef3ff)] px-6 py-12 shadow-[0_20px_42px_rgba(18,31,69,0.08)] md:px-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary-soft">
+      <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#16213f_0%,#273c75_52%,#1e3799_100%)] px-6 py-12 text-white shadow-[0_20px_42px_rgba(18,31,69,0.18)] md:px-10">
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/70">
           Services
         </p>
-        <h1 className="display-font mt-4 max-w-4xl text-[2.05rem] font-semibold leading-tight text-primary md:text-[2.65rem]">
+        <h1 className="display-font mt-4 max-w-4xl text-[2.05rem] font-semibold leading-tight md:text-[2.65rem]">
           Member-centered services for smoother business operation in New Road.
         </h1>
-        <p className="mt-6 max-w-3xl text-base leading-8 text-muted">
+        <p className="mt-6 max-w-3xl text-base leading-8 text-white/78">
           KNBA can serve as a practical nonprofit support platform for local
           businesses by coordinating communication, solving shared market
           challenges, and opening access to training, visibility, and

@@ -1,0 +1,54 @@
+export type OrganizationProfile = {
+  id?: number;
+  organization_name: string;
+  short_name: string;
+  office_address: string;
+  phone_number: string;
+  email: string;
+  logo_url: string;
+  map_embed_url: string;
+  is_active?: boolean;
+};
+
+export const defaultOrganizationProfile: OrganizationProfile = {
+  organization_name: "Khichapokhari Newroad Business Association",
+  short_name: "KNBA",
+  office_address: "Khichapokhari, New Road, Kathmandu",
+  phone_number: "+977-1-5350000",
+  email: "secretariat@knba.org.np",
+  logo_url: "",
+  map_embed_url:
+    "https://www.google.com/maps?q=Khichapokhari%20New%20Road%20Kathmandu&output=embed",
+  is_active: true,
+};
+
+export function resolveOrganizationImageSrc(src: string) {
+  if (!src) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(src)) {
+    return src;
+  }
+
+  return `http://127.0.0.1:8000${src.startsWith("/") ? src : `/${src}`}`;
+}
+
+export function resolveOrganizationMapEmbedSrc(value: string) {
+  const rawValue = value.trim();
+
+  if (!rawValue) {
+    return defaultOrganizationProfile.map_embed_url;
+  }
+
+  const iframeSrcMatch = rawValue.match(/src=["']([^"']+)["']/i);
+  if (iframeSrcMatch?.[1]) {
+    return iframeSrcMatch[1];
+  }
+
+  if (/^https?:\/\//i.test(rawValue)) {
+    return rawValue;
+  }
+
+  return defaultOrganizationProfile.map_embed_url;
+}

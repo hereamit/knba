@@ -1,17 +1,30 @@
+"use client";
 import Link from "next/link";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
+import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
 import { footerSocialLinks, officeHours, siteNavItems } from "@/lib/site-data";
 
 export function SiteFooter() {
+  const { profile } = useOrganizationProfile();
+
   return (
     <footer className="mt-20 bg-[#101a35] text-white">
       <div className="section-wrap grid gap-8 py-14 md:grid-cols-2 xl:grid-cols-[1.15fr_0.75fr_0.75fr_0.9fr]">
         <div>
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-[linear-gradient(135deg,#273c75,#1e3799)] text-xl font-black text-white">
-              K
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.2rem] bg-[linear-gradient(135deg,#273c75,#1e3799)] text-xl font-black text-white">
+              {profile.logo_url ? (
+                <img
+                  src={resolveOrganizationImageSrc(profile.logo_url)}
+                  alt={profile.short_name}
+                  className="h-full w-full object-contain p-2"
+                />
+              ) : (
+                profile.short_name.slice(0, 1)
+              )}
             </div>
             <h2 className="display-font max-w-sm text-2xl font-semibold">
-              Khichapokhari Newroad Business Association
+              {profile.organization_name}
             </h2>
           </div>
         </div>
@@ -64,8 +77,8 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <div className="section-wrap flex flex-col gap-3 py-5 text-sm text-white/62 md:flex-row md:items-center md:justify-between">
-          <p>© 2026 KNBA. All rights reserved.</p>
-          <p>Khichapokhari, New Road, Kathmandu, Nepal</p>
+          <p>© 2026 {profile.short_name}. All rights reserved.</p>
+          <p>{profile.office_address}, Nepal</p>
         </div>
       </div>
     </footer>

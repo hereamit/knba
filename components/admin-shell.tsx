@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import {
   apiRequest,
   clearAdminSession,
@@ -12,7 +13,8 @@ import {
   storeAdminSession,
   type AdminSession,
 } from "@/lib/api";
-import { adminNavItems, messageRows as fallbackMessages } from "@/lib/site-data";
+import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
+import { adminNavItems } from "@/lib/site-data";
 
 type TopbarMessage = {
   id: string;
@@ -21,6 +23,7 @@ type TopbarMessage = {
   date: string;
   message: string;
   isRead: boolean;
+  href: string;
 };
 
 const adminThemes = [
@@ -111,15 +114,6 @@ const adminThemes = [
   },
 ];
 
-const fallbackTopbarMessages: TopbarMessage[] = fallbackMessages.map((message) => ({
-  id: `${message.email}-${message.date}`,
-  name: message.name,
-  topic: message.topic,
-  date: message.date,
-  message: message.message,
-  isRead: false,
-}));
-
 type ApiMessage = {
   id: number;
   full_name: string;
@@ -129,30 +123,64 @@ type ApiMessage = {
   is_read: boolean;
 };
 
+type BusinessSubmissionPreview = {
+  id: number;
+  submitter_name: string;
+  name: string;
+  category: string;
+  description: string;
+  created_at: string;
+  review_status: string;
+  is_read: boolean;
+};
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { profile } = useOrganizationProfile();
+  const adminNavigation = useMemo(
+    () =>
+      adminNavItems.map((item) =>
+        item.label === "Members"
+          ? {
+              ...item,
+              children: [
+                { label: "Term", href: "/admin/members/terms", icon: "+" },
+                { label: "Member", href: "/admin/members/members", icon: "+" },
+              ],
+            }
+          : item,
+      ),
+    [],
+  );
+  const [hydrated, setHydrated] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [themePanelOpen, setThemePanelOpen] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState(adminThemes[0].id);
-  const [session, setSession] = useState<AdminSession | null>(() =>
-    getStoredAdminSession(),
-  );
-  const [topbarMessages, setTopbarMessages] =
-    useState<TopbarMessage[]>(fallbackTopbarMessages);
+  const [session, setSession] = useState<AdminSession | null>(null);
+  const [topbarMessages, setTopbarMessages] = useState<TopbarMessage[]>([]);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const messageRef = useRef<HTMLDivElement | null>(null);
+  const flattenedAdminNavigation = useMemo(
+    () =>
+      adminNavigation.flatMap((item) =>
+        "children" in item && item.children?.length ? [item, ...item.children] : [item],
+      ),
+    [adminNavigation],
+  );
   const activeNavItem =
-    adminNavItems.find((item) => item.href === pathname) ?? adminNavItems[0];
+    flattenedAdminNavigation.find((item) => item.href === pathname) ??
+    adminNavigation.find((item) => pathname.startsWith(`${item.href}/`)) ??
+    adminNavigation[0];
   const activeTheme =
     adminThemes.find((theme) => theme.id === activeThemeId) ?? adminThemes[0];
   const accessToken = session?.access;
 
   const unreadMessages = useMemo(
-    () => topbarMessages.filter((message) => !message.isRead).length,
+    () => topbarMessages.length,
     [topbarMessages],
   );
 
@@ -187,10 +215,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSession(getStoredAdminSession());
+      setHydrated(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
     if (!session) {
       router.replace("/login");
     }
-  }, [router, session]);
+  }, [hydrated, router, session]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -206,13 +247,19 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
     const loadAdminState = async () => {
       try {
-        const [user, messages] = await Promise.all([
+        const [user, messages, businessSubmissions] = await Promise.all([
           apiRequest<AdminSession["user"]>("/auth/me/", {
             token: accessToken,
           }),
           apiRequest<ApiMessage[]>("/contact-submissions/", {
             token: accessToken,
           }),
+          apiRequest<BusinessSubmissionPreview[]>(
+            "/business-showcase-submissions/?status=pending",
+            {
+              token: accessToken,
+            },
+          ),
         ]);
 
         if (isCancelled) {
@@ -229,14 +276,43 @@ export function AdminShell({ children }: { children: ReactNode }) {
           return nextSession;
         });
         setTopbarMessages(
-          messages.slice(0, 5).map((message) => ({
-            id: String(message.id),
-            name: message.full_name,
-            topic: message.subject,
-            date: formatDate.format(new Date(message.created_at)),
-            message: message.message,
-            isRead: message.is_read,
-          })),
+          [
+            ...messages.map((message) => ({
+              id: `contact-${message.id}`,
+              name: message.full_name,
+              topic: message.subject,
+              date: formatDate.format(new Date(message.created_at)),
+              message: message.message,
+              isRead: message.is_read,
+              href: `/admin/messages?message_type=contact&message_id=${message.id}`,
+              createdAt: message.created_at,
+            })),
+            ...businessSubmissions.map((submission) => ({
+              id: `business-${submission.id}`,
+              name: submission.submitter_name,
+              topic: `Business Showcase: ${submission.name}`,
+              date: formatDate.format(new Date(submission.created_at)),
+              message: submission.description || `${submission.category} business submission`,
+              isRead: submission.is_read,
+              href: `/admin/messages?message_type=business&message_id=${submission.id}`,
+              createdAt: submission.created_at,
+            })),
+          ]
+            .filter((message) => !message.isRead)
+            .sort(
+              (left, right) =>
+                new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+            )
+            .slice(0, 5)
+            .map((message) => ({
+              id: message.id,
+              name: message.name,
+              topic: message.topic,
+              date: message.date,
+              message: message.message,
+              isRead: message.isRead,
+              href: message.href,
+            })),
         );
       } catch {
         if (isCancelled) {
@@ -254,7 +330,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     return () => {
       isCancelled = true;
     };
-  }, [accessToken, router]);
+  }, [accessToken, pathname, router]);
 
   const handleLogout = () => {
     clearAdminSession();
@@ -264,7 +340,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     router.push("/login");
   };
 
-  if (!session) {
+  if (!hydrated || !session) {
     return <div className="min-h-screen bg-[#eef2f9]" />;
   }
 
@@ -299,7 +375,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     color: "var(--admin-header-text)",
                   }}
                 >
-                  K
+                  {profile.logo_url ? (
+                    <img
+                      src={resolveOrganizationImageSrc(profile.logo_url)}
+                      alt={profile.short_name}
+                      className="h-full w-full object-contain p-2"
+                    />
+                  ) : (
+                    profile.short_name.slice(0, 1)
+                  )}
                 </div>
                 {!sidebarCollapsed ? (
                   <div>
@@ -307,7 +391,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       className="text-xs font-semibold uppercase tracking-[0.24em]"
                       style={{ color: "var(--admin-sidebar-muted-text)" }}
                     >
-                      KNBA
+                      {profile.short_name}
                     </p>
                     <p
                       className="text-lg font-bold"
@@ -336,32 +420,68 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
             <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1">
               <nav className="space-y-2">
-                {adminNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    data-active={pathname === item.href}
-                    className={`rounded-[0.9rem] font-semibold transition ${
-                      sidebarCollapsed ? "justify-center px-3" : ""
-                    }`}
-                    onClick={() => setSidebarOpen(false)}
-                    title={sidebarCollapsed ? item.label : undefined}
-                    style={{
-                      display: "flex",
-                      gap: "0.8rem",
-                      padding: "0.85rem 1rem",
-                      color:
-                        pathname === item.href
-                          ? "var(--admin-sidebar-text)"
-                          : "var(--admin-sidebar-muted-text)",
-                      background:
-                        pathname === item.href ? "var(--admin-active-bg)" : "transparent",
-                    }}
-                  >
-                    <span className="text-lg leading-none">{item.icon}</span>
-                    {!sidebarCollapsed ? <span>{item.label}</span> : null}
-                  </Link>
-                ))}
+                {adminNavigation.map((item) => {
+                  const isItemActive =
+                    pathname === item.href ||
+                    ("children" in item &&
+                      Boolean(item.children?.some((child) => child.href === pathname)));
+                  const childItems =
+                    "children" in item && item.children?.length ? item.children : [];
+
+                  return (
+                    <div key={item.href} className="space-y-1">
+                      <Link
+                        href={item.href}
+                        data-active={isItemActive}
+                        className={`rounded-[0.9rem] font-semibold transition ${
+                          sidebarCollapsed ? "justify-center px-3" : ""
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                        title={sidebarCollapsed ? item.label : undefined}
+                        style={{
+                          display: "flex",
+                          gap: "0.8rem",
+                          padding: "0.85rem 1rem",
+                          color: isItemActive
+                            ? "var(--admin-sidebar-text)"
+                            : "var(--admin-sidebar-muted-text)",
+                          background: isItemActive ? "var(--admin-active-bg)" : "transparent",
+                        }}
+                      >
+                        <span className="text-lg leading-none">{item.icon}</span>
+                        {!sidebarCollapsed ? <span>{item.label}</span> : null}
+                      </Link>
+
+                      {!sidebarCollapsed && childItems.length && pathname.startsWith("/admin/members") ? (
+                        <div className="space-y-1 pl-5">
+                          {childItems.map((child) => {
+                            const isChildActive = pathname === child.href;
+
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={() => setSidebarOpen(false)}
+                                className="flex items-center gap-3 rounded-[0.8rem] px-3 py-2 text-sm font-semibold transition"
+                                style={{
+                                  color: isChildActive
+                                    ? "var(--admin-sidebar-text)"
+                                    : "var(--admin-sidebar-muted-text)",
+                                  background: isChildActive
+                                    ? "var(--admin-active-bg)"
+                                    : "transparent",
+                                }}
+                              >
+                                <span className="text-base leading-none">{child.icon}</span>
+                                <span>{child.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </nav>
             </div>
 
@@ -464,9 +584,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#eb2f06] px-1 text-[10px] font-bold text-white">
-                      {unreadMessages}
-                    </span>
+                    {unreadMessages > 0 ? (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#eb2f06] px-1 text-[10px] font-bold text-white">
+                        {unreadMessages}
+                      </span>
+                    ) : null}
                   </div>
 
                   {messageOpen ? (
@@ -480,9 +602,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         </p>
                       </div>
                       <div className="mt-1 space-y-1">
-                        {topbarMessages.slice(0, 3).map((message) => (
-                          <div
+                        {topbarMessages.length ? topbarMessages.slice(0, 3).map((message) => (
+                          <Link
                             key={message.id}
+                            href={message.href}
+                            onClick={() => {
+                              setMessageOpen(false);
+                              setTopbarMessages((current) =>
+                                current.filter((item) => item.id !== message.id),
+                              );
+                            }}
                             className="rounded-[0.8rem] px-3 py-2.5 transition hover:bg-slate-50"
                           >
                             <div className="flex items-start justify-between gap-3">
@@ -499,8 +628,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                             <p className="mt-1 line-clamp-2 text-sm text-slate-500">
                               {message.message}
                             </p>
+                          </Link>
+                        )) : (
+                          <div className="rounded-[0.8rem] px-3 py-3 text-sm text-slate-500">
+                            No unread messages.
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   ) : null}
@@ -577,15 +710,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </div>
 
       <div
-        className={`fixed right-0 top-24 z-30 transition-transform duration-300 ${
-          themePanelOpen ? "translate-x-0" : "translate-x-[calc(100%-2.75rem)]"
+        className={`fixed right-0 top-20 z-30 transition-transform duration-300 ${
+          themePanelOpen ? "translate-x-0" : "translate-x-[calc(100%-1.7rem)]"
         }`}
       >
         <div className="flex overflow-hidden rounded-l-[1.2rem] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(18,31,69,0.14)]">
           <button
             type="button"
             onClick={() => setThemePanelOpen((value) => !value)}
-            className="flex w-11 items-center justify-center bg-[linear-gradient(180deg,#273c75,#1e3799)] text-[11px] font-bold uppercase tracking-[0.16em] text-white [writing-mode:vertical-rl]"
+            className="flex h-20 w-[1.7rem] items-center justify-center self-start bg-[linear-gradient(180deg,#273c75,#1e3799)] text-[9px] font-bold uppercase tracking-[0.08em] text-white [writing-mode:vertical-rl]"
             aria-label="Open theme panel"
           >
             Theme

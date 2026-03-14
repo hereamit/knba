@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { apiRequest } from "@/lib/api";
+import { moveToNextFormField, resetEnterNavigationState } from "@/lib/enter-navigation";
 
 export function ContactForm() {
+  const { profile } = useOrganizationProfile();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -23,12 +26,14 @@ export function ContactForm() {
         Contact the association office.
       </h2>
       <p className="mt-4 text-sm leading-8 text-muted">
-        Send your inquiry to the KNBA office and the message will be delivered
-        to the admin inbox.
+        Send your message directly to the {profile.short_name} office for
+        follow-up and coordination.
       </p>
 
       <form
         className="mt-8 space-y-5"
+        onKeyDown={moveToNextFormField}
+        onBlurCapture={resetEnterNavigationState}
         onSubmit={async (event) => {
           event.preventDefault();
           setSubmitting(true);

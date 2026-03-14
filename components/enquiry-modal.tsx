@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
+import { moveToNextFormField, resetEnterNavigationState } from "@/lib/enter-navigation";
 
 export function EnquiryModal({
   onClose,
 }: {
   onClose: () => void;
 }) {
+  const { profile } = useOrganizationProfile();
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -36,13 +39,15 @@ export function EnquiryModal({
             Visitor Enquiry
           </p>
           <h2 className="display-font mt-1 text-2xl font-semibold">
-            Send your message to KNBA.
+            Send your message to {profile.short_name}.
           </h2>
         </div>
 
         <div className="p-4 md:p-5">
           <form
             className="grid gap-3"
+            onKeyDown={moveToNextFormField}
+            onBlurCapture={resetEnterNavigationState}
             onSubmit={(event) => {
               event.preventDefault();
               setSubmitted(true);
@@ -88,12 +93,15 @@ export function EnquiryModal({
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                   Enquiry Type
                 </span>
-                <select className="w-full rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 text-sm outline-none transition focus:border-primary-soft">
-                  <option>General Enquiry</option>
-                  <option>Membership</option>
-                  <option>Partnership</option>
-                  <option>Event Support</option>
-                </select>
+                <div className="relative">
+                  <select className="w-full appearance-none rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 pr-12 text-sm outline-none transition focus:border-primary-soft">
+                    <option>General Enquiry</option>
+                    <option>Membership</option>
+                    <option>Partnership</option>
+                    <option>Event Support</option>
+                  </select>
+                  <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+                </div>
               </label>
             </div>
 
@@ -105,7 +113,7 @@ export function EnquiryModal({
                 required
                 rows={3}
                 className="w-full rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 text-sm outline-none transition focus:border-primary-soft"
-                placeholder="Tell us how KNBA can help you."
+                placeholder={`Tell us how ${profile.short_name} can help you.`}
               />
             </label>
 
@@ -135,3 +143,4 @@ export function EnquiryModal({
     </div>
   );
 }
+

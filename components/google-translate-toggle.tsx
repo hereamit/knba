@@ -18,6 +18,11 @@ declare global {
 
 const STORAGE_KEY = "knba_site_lang";
 
+function syncDocumentLanguage(language: "en" | "ne") {
+  document.documentElement.lang = language === "ne" ? "ne" : "en";
+  document.body.classList.toggle("lang-ne", language === "ne");
+}
+
 function applyLanguage(language: "en" | "ne", attempt = 0) {
   const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
 
@@ -40,6 +45,8 @@ export function GoogleTranslateToggle() {
   useEffect(() => {
     const storedLanguage =
       (window.localStorage.getItem(STORAGE_KEY) as "en" | "ne" | null) ?? "en";
+
+    syncDocumentLanguage(storedLanguage);
 
     if (storedLanguage !== "en") {
       window.setTimeout(() => {
@@ -95,6 +102,7 @@ export function GoogleTranslateToggle() {
   const setSiteLanguage = (nextLanguage: "en" | "ne") => {
     setLanguage(nextLanguage);
     window.localStorage.setItem(STORAGE_KEY, nextLanguage);
+    syncDocumentLanguage(nextLanguage);
     applyLanguage(nextLanguage);
   };
 

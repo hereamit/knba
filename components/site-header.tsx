@@ -1,13 +1,15 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EnquiryModal } from "@/components/enquiry-modal";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
+import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
 import { emergencyNotice, siteNavItems } from "@/lib/site-data";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { profile } = useOrganizationProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -47,7 +49,7 @@ export function SiteHeader() {
               {emergencyNotice.message}
             </p>
             <p className="whitespace-nowrap text-[#dfe8ff]">
-              Hotline: {emergencyNotice.contact}
+              Hotline: {profile.phone_number || emergencyNotice.contact}
             </p>
           </div>
         </div>
@@ -64,15 +66,22 @@ export function SiteHeader() {
               className="flex items-center gap-3"
               onClick={() => setMenuOpen(false)}
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-lg font-black text-white ring-1 ring-white/12 transition-all duration-300">
-                K
-              </div>
+              {profile.logo_url ? (
+                <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-white/14 ring-1 ring-white/12 transition-all duration-300">
+                  <img
+                    src={resolveOrganizationImageSrc(profile.logo_url)}
+                    alt={profile.short_name}
+                    className="h-full w-full object-contain p-1.5"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-lg font-black text-white ring-1 ring-white/12 transition-all duration-300">
+                  {profile.short_name.slice(0, 1)}
+                </div>
+              )}
               <div className="transition-all duration-300">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#dfe8ff]">
-                  Kathmandu
-                </p>
                 <p className="text-base font-bold text-[#f7f9ff] transition-all duration-300">
-                  Khichapokhari Newroad Business Association
+                  {profile.organization_name}
                 </p>
               </div>
             </Link>
@@ -101,7 +110,7 @@ export function SiteHeader() {
               <button
                 type="button"
                 onClick={() => setEnquiryOpen(true)}
-                className="btn-primary"
+                className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
               >
                 Visitor Enquiry
               </button>
@@ -146,7 +155,7 @@ export function SiteHeader() {
                   })}
                   <button
                     type="button"
-                    className="btn-primary mt-2"
+                    className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
                     onClick={() => {
                       setMenuOpen(false);
                       setEnquiryOpen(true);

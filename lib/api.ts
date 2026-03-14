@@ -1,5 +1,4 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+export const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 const ADMIN_SESSION_KEY = "knba_admin_session";
 
@@ -101,6 +100,36 @@ export function clearAdminSession() {
   }
 
   window.localStorage.removeItem(ADMIN_SESSION_KEY);
+}
+
+export async function getValidAdminAccessToken() {
+  const session = getStoredAdminSession();
+  if (!session?.refresh) {
+    throw new Error("Admin session not found.");
+  }
+
+  const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      refresh: session.refresh,
+    }),
+  });
+
+  const payload = await refreshResponse.json().catch(() => null);
+  if (!refreshResponse.ok || !payload || typeof payload !== "object" || !("access" in payload)) {
+    clearAdminSession();
+    throw new Error("Session expired. Please sign in again.");
+  }
+
+  const nextSession: AdminSession = {
+    ...session,
+    access: String(payload.access),
+  };
+  storeAdminSession(nextSession);
+  return nextSession.access;
 }
 
 export function getUserInitials(user: Pick<AdminUser, "full_name" | "username"> | null) {
