@@ -85,7 +85,7 @@ function getApiErrorMessage(data: unknown, fallback: string) {
 
 export function AdminGalleryManager() {
   const [items, setItems] = useState<GalleryRecord[]>([]);
-  const [orderDrafts, setOrderDrafts] = useState<Record<number, string>>({});
+  const [orderDrafts, setOrderDrafts] = useState<Record<string, string>>({});
   const [form, setForm] = useState<GalleryFormState>(emptyForm);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -187,7 +187,7 @@ export function AdminGalleryManager() {
       Object.fromEntries(
         normalizedItems
           .filter((item): item is GalleryRecord & { id: number } => typeof item.id === "number")
-          .map((item) => [item.id, String(item.display_order)]),
+          .map((item) => [String(item.id), String(item.display_order)]),
       ),
     );
     syncCategoriesFromItems(normalizedItems);
@@ -312,7 +312,7 @@ export function AdminGalleryManager() {
       return;
     }
 
-    const nextOrder = orderDrafts[item.id] ?? String(item.display_order);
+    const nextOrder = orderDrafts[String(item.id)] ?? String(item.display_order);
       if (!nextOrder.trim()) {
         setError("Display order cannot be empty.");
         return;
@@ -362,7 +362,7 @@ export function AdminGalleryManager() {
       return;
     }
 
-    const nextOrder = orderDrafts[item.id] ?? String(item.display_order);
+    const nextOrder = orderDrafts[String(item.id)] ?? String(item.display_order);
     if (nextOrder === String(item.display_order)) {
       return;
     }
@@ -733,7 +733,7 @@ export function AdminGalleryManager() {
                           min="0"
                           value={
                             typeof item.id === "number"
-                              ? (orderDrafts[item.id] ?? String(item.display_order))
+                              ? (orderDrafts[String(item.id)] ?? String(item.display_order))
                               : String(item.display_order)
                           }
                           onChange={(event) => {
@@ -742,7 +742,7 @@ export function AdminGalleryManager() {
                             }
                             setOrderDrafts((current) => ({
                               ...current,
-                              [item.id]: event.target.value,
+                              [String(item.id)]: event.target.value,
                             }));
                           }}
                           onBlur={() => {
