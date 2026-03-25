@@ -5,9 +5,12 @@ export type OrganizationProfile = {
   office_address: string;
   phone_number: string;
   email: string;
+  logo?: string | null;
   logo_url: string;
   map_embed_url: string;
   is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export const defaultOrganizationProfile: OrganizationProfile = {
@@ -16,6 +19,7 @@ export const defaultOrganizationProfile: OrganizationProfile = {
   office_address: "Khichapokhari, New Road, Kathmandu",
   phone_number: "+977-1-5350000",
   email: "secretariat@knba.org.np",
+  logo: "",
   logo_url: "",
   map_embed_url:
     "https://www.google.com/maps?q=Khichapokhari%20New%20Road%20Kathmandu&output=embed",
@@ -27,7 +31,15 @@ export function resolveOrganizationImageSrc(src: string) {
     return "";
   }
 
-  if (/^https?:\/\//i.test(src)) {
+  if (/^(https?:|blob:|data:)/i.test(src)) {
+    return src;
+  }
+
+  if (src.startsWith("/media/")) {
+    return `http://127.0.0.1:8000${src}`;
+  }
+
+  if (src.startsWith("/")) {
     return src;
   }
 

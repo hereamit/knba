@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EnquiryModal } from "@/components/enquiry-modal";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
+import { API_BASE_URL } from "@/lib/api";
 import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
 import { emergencyNotice, siteNavItems } from "@/lib/site-data";
 
@@ -13,6 +14,7 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [notice, setNotice] = useState<null | typeof emergencyNotice>(null);
 
   useEffect(() => {
     const onScroll = () => {
@@ -31,28 +33,86 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadEmergencyNotice = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/emergency-notices/current/`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load emergency notice.");
+        }
+
+        const data = (await response.json()) as Partial<{
+          label: string;
+          message: string;
+          button_label: string;
+          pdf_url: string;
+        }>;
+
+        if (!isCancelled) {
+          if (data && typeof data === "object" && data.message) {
+            setNotice({
+              ...emergencyNotice,
+              label: data.label ?? emergencyNotice.label,
+              message: data.message ?? emergencyNotice.message,
+              buttonLabel: data.button_label ?? emergencyNotice.buttonLabel,
+              pdfUrl: data.pdf_url ?? "",
+            });
+            return;
+          }
+
+          setNotice(null);
+        }
+      } catch {
+        if (!isCancelled) {
+          setNotice(null);
+        }
+      }
+    };
+
+    void loadEmergencyNotice();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   return (
     <>
       <header className="sticky top-0 z-50">
-        <div
-          className={`overflow-hidden bg-[#c62828] text-white transition-all duration-300 ease-out ${
-            scrolled
-              ? "max-h-0 -translate-y-full border-b-0 py-0 opacity-0"
-              : "max-h-24 translate-y-0 border-b border-white/10 opacity-100"
-          }`}
-        >
-          <div className="section-wrap flex flex-col gap-1 py-2 text-xs font-semibold tracking-[0.08em] sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[#f7f9ff]">
-              <span className="mr-2 rounded-full bg-white/12 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-[#dfe8ff]">
-                {emergencyNotice.label}
-              </span>
-              {emergencyNotice.message}
-            </p>
-            <p className="whitespace-nowrap text-[#dfe8ff]">
-              Hotline: {profile.phone_number || emergencyNotice.contact}
-            </p>
+        {notice ? (
+          <div
+            className={`overflow-hidden bg-[#c62828] text-white transition-all duration-300 ease-out ${
+              scrolled
+                ? "max-h-0 -translate-y-full border-b-0 py-0 opacity-0"
+                : "max-h-24 translate-y-0 border-b border-white/10 opacity-100"
+            }`}
+          >
+            <div className="section-wrap flex flex-col gap-3 py-2 text-xs font-semibold tracking-[0.08em] sm:flex-row sm:items-center sm:justify-between">
+              <p className="min-w-0 text-[#f7f9ff]">
+                <span className="mr-2 rounded-full bg-white/12 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-[#dfe8ff]">
+                  {notice.label}
+                </span>
+                {notice.message}
+              </p>
+              <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                {notice.pdfUrl ? (
+                  <a
+                    href={notice.pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-[2rem] items-center justify-center rounded-full border border-white/18 bg-white/12 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-white/18"
+                  >
+                    {notice.buttonLabel}
+                  </a>
+                ) : null}
+              </div>
+            </div>
           </div>
-        </div>
+        ) : null}
         <div
           className={`border-b border-white/10 bg-[linear-gradient(135deg,#273c75,#1e3799)] backdrop-blur-xl transition-all duration-300 ease-out ${
             scrolled
@@ -63,15 +123,15 @@ export function SiteHeader() {
           <div className="section-wrap flex items-center justify-between gap-4 py-4 transition-all duration-300 ease-out">
             <Link
               href="/"
-              className="flex items-center gap-3"
+              className="flex items-center gap-2"
               onClick={() => setMenuOpen(false)}
             >
               {profile.logo_url ? (
-                <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-white/14 ring-1 ring-white/12 transition-all duration-300">
+                <div className="relative h-12 w-32 overflow-hidden transition-all duration-300">
                   <img
                     src={resolveOrganizationImageSrc(profile.logo_url)}
                     alt={profile.short_name}
-                    className="h-full w-full object-contain p-1.5"
+                    className="h-full w-full object-contain"
                   />
                 </div>
               ) : (

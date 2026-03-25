@@ -147,6 +147,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               children: [
                 { label: "Term", href: "/admin/members/terms", icon: "+" },
                 { label: "Member", href: "/admin/members/members", icon: "+" },
+                { label: "General Member", href: "/admin/members/general-members", icon: "+" },
               ],
             }
           : item,
@@ -284,7 +285,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               date: formatDate.format(new Date(message.created_at)),
               message: message.message,
               isRead: message.is_read,
-              href: `/admin/messages?message_type=contact&message_id=${message.id}`,
+              href: `/admin/messages/contact/${message.id}`,
               createdAt: message.created_at,
             })),
             ...businessSubmissions.map((submission) => ({
@@ -294,7 +295,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               date: formatDate.format(new Date(submission.created_at)),
               message: submission.description || `${submission.category} business submission`,
               isRead: submission.is_read,
-              href: `/admin/messages?message_type=business&message_id=${submission.id}`,
+              href: `/admin/messages/business/${submission.id}`,
               createdAt: submission.created_at,
             })),
           ]
@@ -367,24 +368,26 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 href="/admin"
                 className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-3"}`}
               >
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl font-black"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(135deg,var(--admin-accent-start),var(--admin-accent-end))",
-                    color: "var(--admin-header-text)",
-                  }}
-                >
-                  {profile.logo_url ? (
+                {profile.logo_url ? (
+                  <div className="flex h-14 w-20 items-center justify-center overflow-hidden">
                     <img
                       src={resolveOrganizationImageSrc(profile.logo_url)}
                       alt={profile.short_name}
-                      className="h-full w-full object-contain p-2"
+                      className="h-full w-full object-contain"
                     />
-                  ) : (
+                  </div>
+                ) : (
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl font-black"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(135deg,var(--admin-accent-start),var(--admin-accent-end))",
+                      color: "var(--admin-header-text)",
+                    }}
+                  >
                     profile.short_name.slice(0, 1)
-                  )}
-                </div>
+                  </div>
+                )}
                 {!sidebarCollapsed ? (
                   <div>
                     <p

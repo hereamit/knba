@@ -13,6 +13,8 @@ export const emergencyNotice = {
   message:
     "For urgent market coordination, safety concerns, or service disruption updates, contact the KNBA secretariat immediately.",
   contact: "+977-1-5350000",
+  buttonLabel: "View Notice",
+  pdfUrl: "",
 };
 
 export type HeroSlide = {
@@ -653,16 +655,18 @@ export const advisoryMembers: MemberProfile[] = [
 ];
 
 export const adminNavItems = [
-  { label: "Dashboard", href: "/admin", icon: "◫" },
-  { label: "Members", href: "/admin/members", icon: "◎" },
-  { label: "Events", href: "/admin/events", icon: "◉" },
-  { label: "Business Showcase", href: "/admin/business-showcase", icon: "▤" },
-  { label: "Organization Profile", href: "/admin/organization-profile", icon: "◌" },
-  { label: "Gallery", href: "/admin/gallery", icon: "▣" },
-  { label: "Messages", href: "/admin/messages", icon: "✉" },
-  { label: "Settings", href: "/admin/settings", icon: "⚙" },
+  { label: "Dashboard", href: "/admin", icon: "[]" },
+  { label: "About", href: "/admin/about", icon: "A" },
+  { label: "Members", href: "/admin/members", icon: "()" },
+  { label: "Events", href: "/admin/events", icon: "o" },
+  { label: "Services", href: "/admin/services", icon: "S" },
+  { label: "Emergency Notice", href: "/admin/emergency-notices", icon: "!" },
+  { label: "Business Showcase", href: "/admin/business-showcase", icon: "#" },
+  { label: "Organization Profile", href: "/admin/organization-profile", icon: "@" },
+  { label: "Gallery", href: "/admin/gallery", icon: "*" },
+  { label: "Messages", href: "/admin/messages", icon: "+" },
+  { label: "Settings", href: "/admin/settings", icon: "=" },
 ];
-
 export const adminMetricCards = [
   {
     label: "Active Members",
@@ -862,3 +866,4 @@ export const settingsCards = [
       "Choose how uploaded gallery assets will be validated, stored, and served once the backend is added.",
   },
 ];
+

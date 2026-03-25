@@ -1,6 +1,7 @@
 import os
 from io import BytesIO
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import models
 from PIL import Image, ImageOps
@@ -150,6 +151,25 @@ class OrganizationProfile(TimeStampedModel):
         super().save(*args, **kwargs)
 
 
+class EmergencyNotice(TimeStampedModel):
+    label = models.CharField(max_length=120, default="Emergency Notice")
+    message = models.TextField(
+        default=(
+            "For urgent market coordination, safety concerns, or service disruption "
+            "updates, contact the KNBA secretariat immediately."
+        )
+    )
+    button_label = models.CharField(max_length=80, default="View Notice")
+    pdf = models.FileField(upload_to="emergency-notices/pdfs/", blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("-is_active", "-updated_at", "-created_at", "-id")
+
+    def __str__(self) -> str:
+        return self.label
+
+
 class HeroSlide(TimeStampedModel):
     eyebrow = models.CharField(max_length=120, blank=True)
     title = models.CharField(max_length=255)
@@ -240,6 +260,24 @@ class MemberProfile(TimeStampedModel):
     def save(self, *args, **kwargs):
         optimize_uploaded_image(self.photo)
         super().save(*args, **kwargs)
+
+
+class GeneralMember(TimeStampedModel):
+    business_name = models.CharField(max_length=180)
+    contact_person = models.CharField(max_length=120)
+    category = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=50)
+    email = models.EmailField(blank=True)
+    office_address = models.CharField(max_length=255, blank=True)
+    joined_date = models.DateField(blank=True, null=True)
+    note = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("business_name", "contact_person", "id")
+
+    def __str__(self) -> str:
+        return self.business_name
 
 
 class GalleryItem(TimeStampedModel):
@@ -376,3 +414,43 @@ class ContactSubmission(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.full_name}: {self.subject}"
+
+
+class ContactReply(TimeStampedModel):
+    class DeliveryStatus(models.TextChoices):
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
+
+    submission = models.ForeignKey(
+        ContactSubmission,
+        related_name="replies",
+        on_delete=models.CASCADE,
+    )
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    recipient_email = models.EmailField()
+    attachment = models.FileField(upload_to="contact-replies/attachments/", blank=True, null=True)
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="contact_replies",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    delivery_status = models.CharField(
+        max_length=20,
+        choices=DeliveryStatus.choices,
+        default=DeliveryStatus.SENT,
+    )
+    error_message = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("-created_at", "id")
+
+    def __str__(self) -> str:
+        return f"{self.recipient_email} - {self.subject}"
+
+    def delete(self, *args, **kwargs):
+        if self.attachment:
+            self.attachment.delete(save=False)
+        super().delete(*args, **kwargs)

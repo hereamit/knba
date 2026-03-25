@@ -49,7 +49,10 @@ export function OrganizationProfileProvider({
         setProfile({
           ...defaultOrganizationProfile,
           ...data,
+          logo: typeof data.logo === "string" ? data.logo : "",
           logo_url: data.logo_url ?? "",
+          created_at: data.created_at,
+          updated_at: data.updated_at,
         });
       } else {
         setProfile(defaultOrganizationProfile);

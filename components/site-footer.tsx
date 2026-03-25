@@ -12,17 +12,19 @@ export function SiteFooter() {
       <div className="section-wrap grid gap-8 py-14 md:grid-cols-2 xl:grid-cols-[1.15fr_0.75fr_0.75fr_0.9fr]">
         <div>
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.2rem] bg-[linear-gradient(135deg,#273c75,#1e3799)] text-xl font-black text-white">
-              {profile.logo_url ? (
+            {profile.logo_url ? (
+              <div className="flex h-16 w-24 items-center justify-center overflow-hidden">
                 <img
                   src={resolveOrganizationImageSrc(profile.logo_url)}
                   alt={profile.short_name}
-                  className="h-full w-full object-contain p-2"
+                  className="h-full w-full object-contain"
                 />
-              ) : (
+              </div>
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.2rem] bg-[linear-gradient(135deg,#273c75,#1e3799)] text-xl font-black text-white">
                 profile.short_name.slice(0, 1)
-              )}
-            </div>
+              </div>
+            )}
             <h2 className="display-font max-w-sm text-2xl font-semibold">
               {profile.organization_name}
             </h2>

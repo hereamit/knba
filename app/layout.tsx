@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DynamicBrandAssets } from "@/components/dynamic-brand-assets";
 import { Merriweather, Source_Sans_3 } from "next/font/google";
 import { OrganizationProfileProvider } from "@/components/organization-profile-provider";
 import "./globals.css";
@@ -28,7 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${sourceSans.variable} ${merriweather.variable}`}>
-        <OrganizationProfileProvider>{children}</OrganizationProfileProvider>
+        <OrganizationProfileProvider>
+          <DynamicBrandAssets />
+          {children}
+        </OrganizationProfileProvider>
       </body>
     </html>
   );

@@ -1,3 +1,4 @@
+from django.core.mail import EmailMessage
 from django.db.models import Count, Max
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -12,8 +13,11 @@ from .models import (
     BusinessShowcaseItem,
     BusinessShowcaseSubmission,
     CommitteeTerm,
+    ContactReply,
     ContactSubmission,
+    EmergencyNotice,
     Event,
+    GeneralMember,
     GalleryItem,
     HeroSlide,
     MemberProfile,
@@ -27,9 +31,12 @@ from .serializers import (
     BusinessShowcaseSubmissionSerializer,
     CommitteeTermSerializer,
     ContactSubmissionCreateSerializer,
+    ContactReplySerializer,
     ContactSubmissionSerializer,
     CurrentUserSerializer,
+    EmergencyNoticeSerializer,
     EventSerializer,
+    GeneralMemberSerializer,
     GalleryItemSerializer,
     HeroSlideSerializer,
     LoginSerializer,
@@ -38,6 +45,15 @@ from .serializers import (
     SiteSettingsSerializer,
     OrganizationProfileSerializer,
 )
+
+RESERVED_EMAIL_DOMAINS = {
+    "example.com",
+    "example.org",
+    "example.net",
+    "invalid",
+    "localhost",
+    "test",
+}
 
 
 class PublicReadAdminWriteViewSet(viewsets.ModelViewSet):
@@ -106,6 +122,88 @@ class SiteSettingsView(APIView):
         return Response(serializer.data)
 
 
+class AboutPageView(APIView):
+    permission_classes = (AllowAny,)
+
+    def _get_settings(self):
+        settings = SiteSettings.objects.order_by("id").first()
+        if settings is None:
+            settings = SiteSettings.objects.create()
+        return settings
+
+    def _get_current_term(self):
+        return (
+            CommitteeTerm.objects.filter(is_current=True, is_active=True).first()
+            or CommitteeTerm.objects.filter(is_active=True)
+            .order_by("display_order", "-start_year", "id")
+            .first()
+        )
+
+    def _get_founder_member(self, queryset):
+        return (
+            queryset.filter(role__iexact="Founder").order_by("display_order", "id").first()
+            or queryset.filter(role__iexact="Founding President")
+            .order_by("display_order", "id")
+            .first()
+            or queryset.filter(role__icontains="founder").order_by("display_order", "id").first()
+            or queryset.filter(role__icontains="founding").order_by("display_order", "id").first()
+        )
+
+    def get(self, request):
+        settings = self._get_settings()
+        current_term = self._get_current_term()
+        members = MemberProfile.objects.filter(is_active=True).select_related("term")
+
+        if current_term is not None:
+            members = members.filter(term=current_term)
+
+        committee_member_count = members.count()
+        general_member_count = GeneralMember.objects.filter(is_active=True).count()
+        founder = self._get_founder_member(members)
+        president = members.filter(role__iexact="President").order_by("display_order", "id").first()
+
+        return Response(
+            {
+                "settings": SiteSettingsSerializer(settings, context={"request": request}).data,
+                "founder": (
+                    MemberProfileSerializer(founder, context={"request": request}).data
+                    if founder is not None
+                    else None
+                ),
+                "president": (
+                    MemberProfileSerializer(president, context={"request": request}).data
+                    if president is not None
+                    else None
+                ),
+                "current_term": (
+                    {
+                        "id": current_term.id,
+                        "label": current_term.label,
+                        "start_year": current_term.start_year,
+                        "end_year": current_term.end_year,
+                    }
+                    if current_term is not None
+                    else None
+                ),
+                "stats": {
+                    "connected_businesses": committee_member_count + general_member_count,
+                    "committee_members": committee_member_count,
+                    "general_members": general_member_count,
+                    "leadership_members": members.filter(
+                        category=MemberProfile.Category.LEADERSHIP
+                    ).count(),
+                    "executive_members": members.filter(
+                        category=MemberProfile.Category.EXECUTIVE
+                    ).count(),
+                    "advisory_members": members.filter(
+                        category=MemberProfile.Category.ADVISORY
+                    ).count(),
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class OrganizationProfileViewSet(PublicReadAdminWriteViewSet):
     queryset = OrganizationProfile.objects.all()
     serializer_class = OrganizationProfileSerializer
@@ -149,6 +247,48 @@ class OrganizationProfileViewSet(PublicReadAdminWriteViewSet):
         profile.is_active = True
         profile.save(update_fields=["is_active", "updated_at"])
         serializer = self.get_serializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class EmergencyNoticeViewSet(PublicReadAdminWriteViewSet):
+    queryset = EmergencyNotice.objects.all()
+    serializer_class = EmergencyNoticeSerializer
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.user.is_authenticated:
+            return queryset
+        return queryset.filter(is_active=True)
+
+    def _sync_active_notice(self, instance):
+        if instance.is_active:
+            EmergencyNotice.objects.exclude(pk=instance.pk).update(is_active=False)
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        self._sync_active_notice(instance)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        self._sync_active_notice(instance)
+
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def current(self, request):
+        notice = EmergencyNotice.objects.filter(is_active=True).first()
+        if notice is None:
+            return Response({}, status=status.HTTP_200_OK)
+
+        serializer = self.get_serializer(notice)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def activate(self, request, pk=None):
+        notice = self.get_object()
+        EmergencyNotice.objects.update(is_active=False)
+        notice.is_active = True
+        notice.save(update_fields=["is_active", "updated_at"])
+        serializer = self.get_serializer(notice)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -226,6 +366,12 @@ class MemberProfileViewSet(PublicReadAdminWriteViewSet):
         if category:
             queryset = queryset.filter(category=category)
         return queryset
+
+
+class GeneralMemberViewSet(viewsets.ModelViewSet):
+    queryset = GeneralMember.objects.all()
+    serializer_class = GeneralMemberSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class GalleryItemViewSet(PublicReadAdminWriteViewSet):
@@ -442,6 +588,7 @@ class EventViewSet(PublicReadAdminWriteViewSet):
 class ContactSubmissionViewSet(viewsets.ModelViewSet):
     queryset = ContactSubmission.objects.all()
     http_method_names = ["get", "post", "patch", "head", "options"]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_permissions(self):
         if self.action == "create":
@@ -457,6 +604,118 @@ class ContactSubmissionViewSet(viewsets.ModelViewSet):
     def unread_count(self, request):
         unread = ContactSubmission.objects.filter(is_read=False).count()
         return Response({"unread": unread})
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def reply(self, request, pk=None):
+        submission = self.get_object()
+        subject = str(request.data.get("subject", "")).strip()
+        body = str(request.data.get("body", "")).strip()
+        recipient_email = (submission.email or "").strip()
+        recipient_domain = recipient_email.rsplit("@", 1)[-1].lower() if "@" in recipient_email else ""
+        attachment = request.FILES.get("attachment")
+
+        if not recipient_email:
+            return Response(
+                {"detail": "This message has no sender email address."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not subject:
+            return Response(
+                {"detail": "Reply subject is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not body:
+            return Response(
+                {"detail": "Reply message is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if (
+            recipient_domain in RESERVED_EMAIL_DOMAINS
+            or recipient_domain.endswith(".example")
+            or recipient_domain.endswith(".invalid")
+            or recipient_domain.endswith(".localhost")
+            or recipient_domain.endswith(".test")
+        ):
+            reply = ContactReply.objects.create(
+                submission=submission,
+                subject=subject,
+                body=body,
+                recipient_email=recipient_email,
+                attachment=attachment,
+                sent_by=request.user if request.user.is_authenticated else None,
+                delivery_status=ContactReply.DeliveryStatus.FAILED,
+                error_message="This sender email uses a reserved test domain and cannot receive mail.",
+            )
+            submission.is_read = True
+            submission.save(update_fields=["is_read", "updated_at"])
+            reply_serializer = ContactReplySerializer(reply, context={"request": request})
+            return Response(
+                {
+                    "detail": "This sender email uses a reserved test domain and cannot receive mail.",
+                    "reply": reply_serializer.data,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        delivery_status = ContactReply.DeliveryStatus.SENT
+        error_message = ""
+
+        try:
+            email = EmailMessage(
+                subject=subject,
+                body=body,
+                to=[recipient_email],
+            )
+            if attachment:
+                email.attach(attachment.name, attachment.read(), attachment.content_type)
+                attachment.seek(0)
+            email.send(fail_silently=False)
+        except Exception as exc:
+            delivery_status = ContactReply.DeliveryStatus.FAILED
+            error_message = str(exc)
+
+        reply = ContactReply.objects.create(
+            submission=submission,
+            subject=subject,
+            body=body,
+            recipient_email=recipient_email,
+            attachment=attachment,
+            sent_by=request.user if request.user.is_authenticated else None,
+            delivery_status=delivery_status,
+            error_message=error_message,
+        )
+
+        submission.is_read = True
+        submission.save(update_fields=["is_read", "updated_at"])
+
+        if delivery_status == ContactReply.DeliveryStatus.FAILED:
+            reply_serializer = ContactReplySerializer(reply, context={"request": request})
+            return Response(
+                {
+                    "detail": error_message or "Unable to send email reply.",
+                    "reply": reply_serializer.data,
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        reply_serializer = ContactReplySerializer(reply, context={"request": request})
+        return Response(
+            {
+                "detail": "Reply sent successfully.",
+                "reply": reply_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ContactReplyViewSet(viewsets.ModelViewSet):
+    queryset = ContactReply.objects.all()
+    serializer_class = ContactReplySerializer
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ["delete", "head", "options"]
 
 
 class DashboardSummaryView(APIView):

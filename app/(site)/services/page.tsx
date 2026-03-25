@@ -1,8 +1,60 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { SectionHeading } from "@/components/section-heading";
-import { serviceHighlights, supportSteps } from "@/lib/site-data";
+import { API_BASE_URL } from "@/lib/api";
+import { supportSteps } from "@/lib/site-data";
+import {
+  fallbackServiceRecords,
+  normalizeServiceRecord,
+  sortServices,
+  type ServiceRecord,
+} from "@/lib/services";
 
 export default function ServicesPage() {
+  const [services, setServices] = useState<ServiceRecord[]>(fallbackServiceRecords);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadServices = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/services/`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load services.");
+        }
+
+        const data = (await response.json()) as ServiceRecord[];
+        if (!isCancelled && Array.isArray(data)) {
+          const normalized = sortServices(
+            data.map(normalizeServiceRecord).filter((item) => item.is_active),
+          );
+          setServices(normalized);
+          setLoadError("");
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setLoadError(error instanceof Error ? error.message : "Unable to load services.");
+        }
+      }
+    };
+
+    void loadServices();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const visibleServices = useMemo(
+    () => services.filter((item) => item.is_active),
+    [services],
+  );
+
   return (
     <div className="section-wrap py-8 md:py-12">
       <section className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#16213f_0%,#273c75_52%,#1e3799_100%)] px-6 py-12 text-white shadow-[0_20px_42px_rgba(18,31,69,0.18)] md:px-10">
@@ -21,10 +73,20 @@ export default function ServicesPage() {
       </section>
 
       <section className="py-20">
+        {loadError ? (
+          <div className="mb-6 rounded-[1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+            {loadError}. Showing the current fallback service content.
+          </div>
+        ) : null}
+        {!loadError && !visibleServices.length ? (
+          <div className="mb-6 rounded-[1rem] border border-line bg-white px-4 py-3 text-sm font-medium text-slate-600">
+            No active services have been published yet.
+          </div>
+        ) : null}
         <div className="grid gap-6 xl:grid-cols-2">
-          {serviceHighlights.map((service) => (
+          {visibleServices.map((service) => (
             <article
-              key={service.title}
+              key={service.id ?? service.title}
               className="panel overflow-hidden rounded-[1.7rem]"
             >
               <div className="border-b border-line px-8 py-7">
@@ -79,9 +141,6 @@ export default function ServicesPage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link className="btn-primary" href="/contact">
             Request Support
-          </Link>
-          <Link className="btn-outline" href="/login">
-            Admin Operations
           </Link>
         </div>
       </section>

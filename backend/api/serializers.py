@@ -7,8 +7,11 @@ from .models import (
     BusinessShowcaseItem,
     BusinessShowcaseSubmission,
     CommitteeTerm,
+    ContactReply,
     ContactSubmission,
+    EmergencyNotice,
     Event,
+    GeneralMember,
     GalleryItem,
     HeroSlide,
     MemberProfile,
@@ -110,6 +113,42 @@ class OrganizationProfileSerializer(serializers.ModelSerializer):
                 if instance.logo:
                     instance.logo.delete(save=False)
                 instance.logo = None
+
+        return super().update(instance, validated_data)
+
+
+class EmergencyNoticeSerializer(serializers.ModelSerializer):
+    pdf_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmergencyNotice
+        fields = (
+            "id",
+            "label",
+            "message",
+            "button_label",
+            "pdf",
+            "pdf_url",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def get_pdf_url(self, obj):
+        request = self.context.get("request")
+        if obj.pdf:
+            if request is not None:
+                return request.build_absolute_uri(obj.pdf.url)
+            return obj.pdf.url
+        return ""
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if request is not None and request.data.get("pdf_clear") in {"1", "true", "True"}:
+            if instance.pdf:
+                instance.pdf.delete(save=False)
+            instance.pdf = None
 
         return super().update(instance, validated_data)
 
@@ -217,6 +256,26 @@ class MemberProfileSerializer(serializers.ModelSerializer):
             instance.photo = None
 
         return super().update(instance, validated_data)
+
+
+class GeneralMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GeneralMember
+        fields = (
+            "id",
+            "business_name",
+            "contact_person",
+            "category",
+            "phone",
+            "email",
+            "office_address",
+            "joined_date",
+            "note",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")
 
 
 class GalleryItemSerializer(serializers.ModelSerializer):
@@ -423,7 +482,52 @@ class ContactSubmissionCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created_at")
 
 
+class ContactReplySerializer(serializers.ModelSerializer):
+    sent_by_name = serializers.SerializerMethodField()
+    attachment_url = serializers.SerializerMethodField()
+    attachment_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ContactReply
+        fields = (
+            "id",
+            "subject",
+            "body",
+            "recipient_email",
+            "attachment",
+            "attachment_url",
+            "attachment_name",
+            "sent_by",
+            "sent_by_name",
+            "delivery_status",
+            "error_message",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+    def get_sent_by_name(self, obj):
+        if not obj.sent_by:
+            return ""
+        return obj.sent_by.get_full_name() or obj.sent_by.get_username()
+
+    def get_attachment_url(self, obj):
+        request = self.context.get("request")
+        if obj.attachment:
+            if request is not None:
+                return request.build_absolute_uri(obj.attachment.url)
+            return obj.attachment.url
+        return ""
+
+    def get_attachment_name(self, obj):
+        if not obj.attachment:
+            return ""
+        return obj.attachment.name.rsplit("/", 1)[-1]
+
+
 class ContactSubmissionSerializer(serializers.ModelSerializer):
+    replies = ContactReplySerializer(many=True, read_only=True)
+
     class Meta:
         model = ContactSubmission
         fields = "__all__"

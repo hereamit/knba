@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import BusinessShowcaseItem, BusinessShowcaseSubmission
+from .models import BusinessShowcaseItem, BusinessShowcaseSubmission, EmergencyNotice
 
 
 class BusinessShowcaseSubmissionApiTests(APITestCase):
@@ -67,3 +68,85 @@ class BusinessShowcaseSubmissionApiTests(APITestCase):
         published_item = BusinessShowcaseItem.objects.get(pk=submission.published_item_id)
         self.assertEqual(published_item.name, "Ram Electronics")
         self.assertTrue(published_item.is_active)
+
+
+class EmergencyNoticeApiTests(APITestCase):
+    def setUp(self):
+        self.admin_user = get_user_model().objects.create_user(
+            username="notice-admin",
+            email="notice-admin@example.com",
+            password="testpass123",
+        )
+
+    def test_public_can_get_current_emergency_notice(self):
+        EmergencyNotice.objects.create(
+            label="Archived Notice",
+            message="Old notice",
+            button_label="Read PDF",
+            is_active=False,
+        )
+        active_notice = EmergencyNotice.objects.create(
+            label="Urgent Market Advisory",
+            message="Road access disruption update.",
+            button_label="View Advisory",
+            is_active=True,
+        )
+
+        response = self.client.get(reverse("emergency-notices-current"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], active_notice.id)
+        self.assertEqual(response.data["label"], "Urgent Market Advisory")
+        self.assertEqual(response.data["button_label"], "View Advisory")
+
+    def test_public_current_notice_is_empty_when_no_notice_is_active(self):
+        EmergencyNotice.objects.create(
+            label="Archived Notice",
+            message="Old notice",
+            button_label="Read PDF",
+            is_active=False,
+        )
+
+        response = self.client.get(reverse("emergency-notices-current"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {})
+
+    def test_admin_can_create_and_activate_emergency_notice(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.post(
+            reverse("emergency-notices-list"),
+            {
+                "label": "Flood Alert",
+                "message": "Please review the attached flood coordination notice.",
+                "button_label": "View Notice",
+                "pdf": SimpleUploadedFile(
+                    "notice.pdf",
+                    b"%PDF-1.4 emergency notice",
+                    content_type="application/pdf",
+                ),
+                "is_active": True,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        first_notice = EmergencyNotice.objects.get(label="Flood Alert")
+        self.assertTrue(first_notice.is_active)
+
+        second_notice = EmergencyNotice.objects.create(
+            label="Power Advisory",
+            message="Temporary outage notice.",
+            button_label="Open Notice",
+            is_active=False,
+        )
+
+        activate_response = self.client.post(
+            reverse("emergency-notices-activate", args=[second_notice.id])
+        )
+
+        self.assertEqual(activate_response.status_code, status.HTTP_200_OK)
+        first_notice.refresh_from_db()
+        second_notice.refresh_from_db()
+        self.assertFalse(first_notice.is_active)
+        self.assertTrue(second_notice.is_active)

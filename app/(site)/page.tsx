@@ -2,12 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HomeHeroSlider } from "@/components/home-hero-slider";
+import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { SectionHeading } from "@/components/section-heading";
 import { API_BASE_URL } from "@/lib/api";
 import {
-  fallbackBusinessShowcaseCards,
+  defaultAboutPageRecord,
+  normalizeAboutPageRecord,
+  type AboutPageRecord,
+} from "@/lib/about-page";
+import {
+  normalizeBusinessShowcaseRecord,
   mapBusinessShowcaseRecordToCard,
   type BusinessShowcaseRecord,
 } from "@/lib/business-showcase";
@@ -19,75 +25,158 @@ import {
   resolveGalleryImageSrc,
   type GalleryRecord,
 } from "@/lib/gallery";
-import { homeStats, serviceHighlights } from "@/lib/site-data";
+import {
+  fallbackServiceRecords,
+  normalizeServiceRecord,
+  sortServices,
+  type ServiceRecord,
+} from "@/lib/services";
+
+function summarizeText(value: string, maxLength = 120) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength).trimEnd()}...`;
+}
 
 export default function HomePage() {
-  const [galleryRecords, setGalleryRecords] = useState<GalleryRecord[]>(fallbackGalleryRecords);
+  const { profile } = useOrganizationProfile();
+  const [about, setAbout] = useState<AboutPageRecord>(defaultAboutPageRecord);
+  const [galleryRecords, setGalleryRecords] = useState<GalleryRecord[]>([]);
   const [businessRecords, setBusinessRecords] = useState<BusinessShowcaseRecord[]>([]);
+  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
 
   useEffect(() => {
     let isCancelled = false;
 
-    const loadGallery = async () => {
+    const loadHomepageContent = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/gallery/`, {
-          cache: "no-store",
-        });
-        if (!response.ok) {
+        const [aboutResponse, galleryResponse, servicesResponse, businessResponse] =
+          await Promise.all([
+            fetch(`${API_BASE_URL}/about-page/`, { cache: "no-store" }),
+            fetch(`${API_BASE_URL}/gallery/`, { cache: "no-store" }),
+            fetch(`${API_BASE_URL}/services/`, { cache: "no-store" }),
+            fetch(`${API_BASE_URL}/business-showcase/`, { cache: "no-store" }),
+          ]);
+
+        if (isCancelled) {
           return;
         }
 
-        const data = (await response.json()) as GalleryRecord[];
-        if (!isCancelled && data.length) {
-          setGalleryRecords(data.map(normalizeGalleryRecord));
+        if (aboutResponse.ok) {
+          setAbout(normalizeAboutPageRecord(await aboutResponse.json()));
+        }
+
+        if (galleryResponse.ok) {
+          const galleryData = (await galleryResponse.json()) as GalleryRecord[];
+          setGalleryRecords(
+            galleryData
+              .map(normalizeGalleryRecord)
+              .filter((item) => item.is_active),
+          );
+        }
+
+        if (servicesResponse.ok) {
+          const servicesData = (await servicesResponse.json()) as ServiceRecord[];
+          setServiceRecords(
+            sortServices(
+              servicesData
+                .map(normalizeServiceRecord)
+                .filter((item) => item.is_active),
+            ),
+          );
+        }
+
+        if (businessResponse.ok) {
+          const businessData = (await businessResponse.json()) as BusinessShowcaseRecord[];
+          setBusinessRecords(
+            businessData
+              .map(normalizeBusinessShowcaseRecord)
+              .filter((item) => item.is_active)
+              .sort((left, right) => {
+                if (left.is_featured !== right.is_featured) {
+                  return left.is_featured ? -1 : 1;
+                }
+                return left.display_order - right.display_order;
+              }),
+          );
         }
       } catch {
-        // Keep local fallback content for the public homepage.
+        // Keep graceful empty states or local slider fallback if the backend is unavailable.
       }
     };
 
-    void loadGallery();
+    void loadHomepageContent();
 
     return () => {
       isCancelled = true;
     };
   }, []);
 
-  useEffect(() => {
-    let isCancelled = false;
+  const statCards = useMemo(
+    () => [
+      {
+        label: "Connected Businesses",
+        value: `${about.stats.connected_businesses}+`,
+        detail:
+          "Active committee members plus general member business records connected to KNBA.",
+      },
+      {
+        label: "Current Term Committee",
+        value: `${about.stats.committee_members}`,
+        detail: about.current_term_label
+          ? `Live committee roster for ${about.current_term_label}.`
+          : "Live committee roster tied to the current working term.",
+      },
+      {
+        label: "General Members",
+        value: `${about.stats.general_members}`,
+        detail:
+          "Internal business member records that support association communication and operations.",
+      },
+      {
+        label: "Leadership Positions",
+        value: `${about.stats.leadership_members}`,
+        detail: `${about.stats.executive_members} executive and ${about.stats.advisory_members} advisory records are active.`,
+      },
+    ],
+    [about],
+  );
 
-    const loadBusinesses = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/business-showcase/`, {
-          cache: "no-store",
-        });
-        if (!response.ok) {
-          return;
-        }
-
-        const data = (await response.json()) as BusinessShowcaseRecord[];
-        if (!isCancelled && data.length) {
-          setBusinessRecords(data);
-        }
-      } catch {
-        // Keep fallback cards.
-      }
-    };
-
-    void loadBusinesses();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+  const aboutHighlights = useMemo(
+    () => [
+      {
+        title: "History",
+        detail: summarizeText(about.settings.history_text, 132),
+      },
+      {
+        title: "Founder",
+        detail: summarizeText(about.settings.founder_message, 128),
+      },
+      {
+        title: "President",
+        detail: summarizeText(about.settings.president_message, 128),
+      },
+      {
+        title: "Mission",
+        detail: summarizeText(about.settings.mission_text, 128),
+      },
+    ].filter((item) => item.detail),
+    [about],
+  );
 
   const sliderSlides = mapGalleryRecordsToSlider(galleryRecords);
   const galleryPreviewItems = galleryRecords.filter((item) => item.is_featured);
   const previewGrid = (galleryPreviewItems.length ? galleryPreviewItems : galleryRecords).slice(0, 4);
   const highlightImage = galleryPreviewItems[0] ?? galleryRecords[0] ?? fallbackGalleryRecords[0];
-  const businessCards = businessRecords.length
-    ? businessRecords.map(mapBusinessShowcaseRecordToCard)
-    : fallbackBusinessShowcaseCards;
+  const businessCards = businessRecords.map(mapBusinessShowcaseRecordToCard);
+  const homepageServices = (serviceRecords.length ? serviceRecords : fallbackServiceRecords).slice(0, 3);
 
   return (
     <div className="pb-20">
@@ -99,7 +188,7 @@ export default function HomePage() {
 
       <section className="section-wrap relative z-10 mt-4 md:-mt-2">
         <div className="grid gap-4 md:grid-cols-4">
-          {homeStats.map((stat) => (
+          {statCards.map((stat) => (
             <article key={stat.label} className="panel rounded-[1.5rem] p-6">
               <p className="text-3xl font-bold text-primary">{stat.value}</p>
               <p className="mt-2 text-sm font-semibold uppercase tracking-[0.24em] text-accent">
@@ -115,21 +204,19 @@ export default function HomePage() {
         <div>
           <SectionHeading
             eyebrow="About KNBA"
-            title="A unified business voice for Khichapokhari and New Road."
-            description="KNBA brings together traders, entrepreneurs, service operators, and community leaders to strengthen business resilience in Kathmandu's busiest commercial corridor."
+            title={`${profile.short_name || about.settings.short_name} builds a unified business voice for Khichapokhari and New Road.`}
+            description={about.settings.history_text}
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {[
-              "Advocacy with local authorities and market stakeholders",
-              "Training, networking, and problem-solving for member businesses",
-              "Community-focused initiatives that keep New Road vibrant and safe",
-              "Partnerships that modernize retail and trade practices",
-            ].map((point) => (
+            {aboutHighlights.map((item) => (
               <div
-                key={point}
+                key={item.title}
                 className="rounded-[1.25rem] border border-line bg-white px-5 py-4 text-sm font-medium leading-7 text-muted"
               >
-                {point}
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-primary-soft">
+                  {item.title}
+                </p>
+                <p className="mt-2">{item.detail}</p>
               </div>
             ))}
           </div>
@@ -160,10 +247,10 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Core Services"
             title="Practical support that makes day-to-day business easier."
-            description="The association focuses on the services local businesses need most: representation, visibility, coordination, learning, and trusted market information."
+            description="These service cards now come from the live KNBA service records managed in the portal."
           />
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            {serviceHighlights.map((service, index) => {
+            {homepageServices.map((service, index) => {
               const featured = index === 1;
 
               return (
@@ -264,7 +351,7 @@ export default function HomePage() {
                   <h3 className="mt-3 text-xl font-semibold">{business.name}</h3>
                 </div>
               </div>
-              <div className="p-6">
+                  <div className="p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-soft">
                   {business.category}
                 </p>
@@ -275,6 +362,11 @@ export default function HomePage() {
             </a>
           ))}
         </div>
+        {!businessCards.length ? (
+          <div className="mt-8 rounded-[1.4rem] border border-dashed border-line bg-white px-5 py-6 text-sm text-muted">
+            No active business showcase records are available yet.
+          </div>
+        ) : null}
       </section>
 
       <section className="section-wrap py-20">
@@ -313,6 +405,11 @@ export default function HomePage() {
             </article>
           ))}
         </div>
+        {!previewGrid.length ? (
+          <div className="mt-8 rounded-[1.4rem] border border-dashed border-line bg-white px-5 py-6 text-sm text-muted">
+            No gallery images are available yet.
+          </div>
+        ) : null}
       </section>
     </div>
   );

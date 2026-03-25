@@ -58,7 +58,7 @@ function MemberCard({
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#273c75,#1e3799)] text-sm font-bold text-white">
           {member.display_order}
         </div>
-        <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-full border-4 border-white shadow-[0_14px_30px_rgba(18,31,69,0.14)]">
+        <div className="relative h-[5.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-full border-4 border-white shadow-[0_14px_30px_rgba(18,31,69,0.14)] md:h-[6rem] md:w-[6rem]">
           {photoSrc ? (
             <img
               src={photoSrc}

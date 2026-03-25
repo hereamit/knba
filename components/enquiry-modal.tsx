@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
+import { apiRequest } from "@/lib/api";
 import { moveToNextFormField, resetEnterNavigationState } from "@/lib/enter-navigation";
 
 export function EnquiryModal({
@@ -11,6 +12,15 @@ export function EnquiryModal({
 }) {
   const { profile } = useOrganizationProfile();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    enquiryType: "General Enquiry",
+    message: "",
+  });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -48,9 +58,40 @@ export function EnquiryModal({
             className="grid gap-3"
             onKeyDown={moveToNextFormField}
             onBlurCapture={resetEnterNavigationState}
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
-              setSubmitted(true);
+              setSubmitting(true);
+              setSubmitted(false);
+              setError("");
+
+              try {
+                await apiRequest("/contact-submissions/", {
+                  method: "POST",
+                  body: {
+                    full_name: form.fullName,
+                    email: form.email,
+                    phone: form.phone,
+                    subject: form.enquiryType,
+                    message: form.message,
+                  },
+                });
+                setSubmitted(true);
+                setForm({
+                  fullName: "",
+                  phone: "",
+                  email: "",
+                  enquiryType: "General Enquiry",
+                  message: "",
+                });
+              } catch (requestError) {
+                setError(
+                  requestError instanceof Error
+                    ? requestError.message
+                    : "Unable to send your enquiry right now.",
+                );
+              } finally {
+                setSubmitting(false);
+              }
             }}
           >
             <div className="grid gap-3 md:grid-cols-2">
@@ -61,6 +102,10 @@ export function EnquiryModal({
                 <input
                   type="text"
                   required
+                  value={form.fullName}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, fullName: event.target.value }))
+                  }
                   className="w-full rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 text-sm outline-none transition focus:border-primary-soft"
                   placeholder="Your full name"
                 />
@@ -72,6 +117,10 @@ export function EnquiryModal({
                 <input
                   type="tel"
                   required
+                  value={form.phone}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, phone: event.target.value }))
+                  }
                   className="w-full rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 text-sm outline-none transition focus:border-primary-soft"
                   placeholder="+977-98XXXXXXXX"
                 />
@@ -85,6 +134,11 @@ export function EnquiryModal({
                 </span>
                 <input
                   type="email"
+                  required
+                  value={form.email}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, email: event.target.value }))
+                  }
                   className="w-full rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 text-sm outline-none transition focus:border-primary-soft"
                   placeholder="name@example.com"
                 />
@@ -94,7 +148,13 @@ export function EnquiryModal({
                   Enquiry Type
                 </span>
                 <div className="relative">
-                  <select className="w-full appearance-none rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 pr-12 text-sm outline-none transition focus:border-primary-soft">
+                  <select
+                    value={form.enquiryType}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, enquiryType: event.target.value }))
+                    }
+                    className="w-full appearance-none rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 pr-12 text-sm outline-none transition focus:border-primary-soft"
+                  >
                     <option>General Enquiry</option>
                     <option>Membership</option>
                     <option>Partnership</option>
@@ -112,6 +172,10 @@ export function EnquiryModal({
               <textarea
                 required
                 rows={3}
+                value={form.message}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, message: event.target.value }))
+                }
                 className="w-full rounded-[0.85rem] border border-line bg-[#f7f9ff] px-3.5 py-2.5 text-sm outline-none transition focus:border-primary-soft"
                 placeholder={`Tell us how ${profile.short_name} can help you.`}
               />
@@ -120,16 +184,23 @@ export function EnquiryModal({
             <div className="flex justify-end">
               <button
                 type="submit"
+                disabled={submitting}
                 className="inline-flex min-h-[2.5rem] items-center justify-center rounded-full bg-[linear-gradient(135deg,#273c75,#1e3799)] px-4.5 py-2.5 text-sm font-bold text-white shadow-[0_14px_28px_rgba(30,55,153,0.22)]"
               >
-                Submit Enquiry
+                {submitting ? "Sending..." : "Submit Enquiry"}
               </button>
             </div>
           </form>
 
+          {error ? (
+            <div className="mt-5 rounded-[1.2rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
           {submitted ? (
             <div className="mt-5 rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-              Your enquiry has been captured in the frontend preview.
+              Your enquiry has been sent successfully.
             </div>
           ) : null}
         </div>

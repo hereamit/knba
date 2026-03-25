@@ -4,8 +4,11 @@ from .models import (
     BusinessShowcaseItem,
     BusinessShowcaseSubmission,
     CommitteeTerm,
+    ContactReply,
     ContactSubmission,
+    EmergencyNotice,
     Event,
+    GeneralMember,
     GalleryItem,
     HeroSlide,
     MemberProfile,
@@ -30,6 +33,13 @@ class OrganizationProfileAdmin(admin.ModelAdmin):
         "is_active",
         "updated_at",
     )
+
+
+@admin.register(EmergencyNotice)
+class EmergencyNoticeAdmin(admin.ModelAdmin):
+    list_display = ("label", "button_label", "is_active", "updated_at")
+    list_filter = ("is_active", "updated_at")
+    search_fields = ("label", "message", "button_label")
 
 
 @admin.register(HeroSlide)
@@ -58,6 +68,13 @@ class MemberProfileAdmin(admin.ModelAdmin):
     list_display = ("name", "term", "role", "category", "phone", "email", "display_order", "is_active")
     list_filter = ("term", "category", "is_active")
     search_fields = ("name", "role", "email", "phone")
+
+
+@admin.register(GeneralMember)
+class GeneralMemberAdmin(admin.ModelAdmin):
+    list_display = ("business_name", "contact_person", "category", "phone", "email", "joined_date", "is_active")
+    list_filter = ("category", "is_active", "joined_date")
+    search_fields = ("business_name", "contact_person", "phone", "email", "office_address")
 
 
 @admin.register(GalleryItem)
@@ -114,3 +131,10 @@ class ContactSubmissionAdmin(admin.ModelAdmin):
     list_display = ("full_name", "subject", "email", "is_read", "created_at")
     list_filter = ("is_read", "created_at")
     search_fields = ("full_name", "subject", "email", "message")
+
+
+@admin.register(ContactReply)
+class ContactReplyAdmin(admin.ModelAdmin):
+    list_display = ("recipient_email", "subject", "sent_by", "delivery_status", "created_at")
+    list_filter = ("delivery_status", "created_at")
+    search_fields = ("recipient_email", "subject", "body", "error_message")
