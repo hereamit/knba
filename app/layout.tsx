@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   title: "KNBA | Khichapokhari Newroad Business Association",
   description:
     "Official website for Khichapokhari Newroad Business Association in New Road, Kathmandu.",
+  icons: {
+    icon: "/api/favicon",
+    shortcut: "/api/favicon",
+    apple: "/api/favicon",
+  },
 };
 
 export default function RootLayout({

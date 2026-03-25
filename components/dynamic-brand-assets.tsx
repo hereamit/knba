@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
-import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
 
 export function DynamicBrandAssets() {
   const { profile } = useOrganizationProfile();
@@ -13,9 +12,7 @@ export function DynamicBrandAssets() {
     }
 
     const faviconSource = profile.logo_url || (typeof profile.logo === "string" ? profile.logo : "");
-    const faviconBaseHref = faviconSource
-      ? resolveOrganizationImageSrc(faviconSource)
-      : "/favicon.ico";
+    const faviconBaseHref = faviconSource ? "/api/favicon" : "/favicon.ico";
     const version = profile.updated_at
       ? encodeURIComponent(profile.updated_at)
       : "current";
@@ -28,6 +25,13 @@ export function DynamicBrandAssets() {
         type: "image/png",
         sizes: "32x32",
         marker: "icon",
+      },
+      {
+        selector: "link[data-knba-dynamic-icon='shortcut-icon']",
+        rel: "shortcut icon",
+        type: "image/png",
+        sizes: "32x32",
+        marker: "shortcut-icon",
       },
       {
         selector: "link[data-knba-dynamic-icon='apple-touch-icon']",
