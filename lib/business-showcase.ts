@@ -2,6 +2,7 @@ import {
   businessShowcaseItems as fallbackBusinessShowcaseItems,
   type BusinessShowcaseItem as FallbackBusinessShowcaseItem,
 } from "@/lib/site-data";
+import { MEDIA_BASE_URL } from "@/lib/api";
 
 export type BusinessShowcaseRecord = {
   id?: number;
@@ -33,7 +34,7 @@ export function resolveBusinessShowcaseImageSrc(src: string) {
     return src;
   }
 
-  return `http://127.0.0.1:8000${src.startsWith("/") ? src : `/${src}`}`;
+  return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
 export function normalizeBusinessShowcaseRecord(

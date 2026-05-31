@@ -1,3 +1,5 @@
+import { MEDIA_BASE_URL } from "@/lib/api";
+
 export type MemberTermRecord = {
   id?: number;
   label: string;
@@ -38,7 +40,7 @@ export function resolveMemberPhotoSrc(src: string) {
     return src;
   }
 
-  return `http://127.0.0.1:8000${src.startsWith("/") ? src : `/${src}`}`;
+  return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
 export function normalizeMemberRecord(record: Partial<MemberRecord>) {

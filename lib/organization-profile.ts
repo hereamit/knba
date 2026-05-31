@@ -1,3 +1,5 @@
+import { MEDIA_BASE_URL } from "@/lib/api";
+
 export type OrganizationProfile = {
   id?: number;
   organization_name: string;
@@ -36,14 +38,14 @@ export function resolveOrganizationImageSrc(src: string) {
   }
 
   if (src.startsWith("/media/")) {
-    return `http://127.0.0.1:8000${src}`;
+    return `${MEDIA_BASE_URL}${src}`;
   }
 
   if (src.startsWith("/")) {
     return src;
   }
 
-  return `http://127.0.0.1:8000${src.startsWith("/") ? src : `/${src}`}`;
+  return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
 export function resolveOrganizationMapEmbedSrc(value: string) {

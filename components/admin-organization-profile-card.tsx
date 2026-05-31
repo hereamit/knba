@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NepalFlagIcon } from "@/components/nepal-flag-icon";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
-import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
+import { API_BASE_URL, MEDIA_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
   focusFirstFormField,
   moveToNextFormField,
@@ -94,17 +94,11 @@ function resolveImageSrc(src: string) {
     return "";
   }
 
-  if (
-    src.startsWith("http://127.0.0.1:8000") ||
-    src.startsWith("http://localhost:8000") ||
-    src.startsWith("blob:") ||
-    src.startsWith("data:")
-  ) {
+  if (/^(https?:|blob:|data:)/i.test(src)) {
     return src;
   }
 
-  const mediaBase = API_BASE_URL.replace(/\/api$/, "");
-  return `${mediaBase}${src.startsWith("/") ? src : `/${src}`}`;
+  return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
 function toTitleCase(value: string) {

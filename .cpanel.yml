@@ -1,0 +1,49 @@
+---
+# cPanel Git Version Control deploy script for KNBA.
+#
+# Triggered when you click "Update from Remote" + "Deploy HEAD Commit"
+# in cPanel > Git Version Control. Runs in the cPanel user's shell from
+# the repo directory (REPO_ROOT below).
+#
+# Prereqs (one-time, before first deploy):
+#   1. Setup Python App   -> Application root: api.knba.org.np
+#                            Startup file:     passenger_wsgi.py  (bridges to REPO_ROOT/backend)
+#                            Python version:   3.11  (must match PY_VERSION below)
+#   2. Setup Node.js App  -> Application root: knba.org.np
+#                            Startup file:     server.js          (bridges to REPO_ROOT)
+#                            Node version:     20    (must match NODE_VERSION below)
+#   3. backend/.env exists on the server (never committed to git) with
+#      DJANGO_DB_ENGINE=mysql and real MySQL credentials.
+#   4. .env.production exists at REPO_ROOT with NEXT_PUBLIC_API_BASE_URL etc.
+#
+# After changing Python/Node version in cPanel, update PY_VERSION/NODE_VERSION
+# below to match the new venv path.
+
+deployment:
+  tasks:
+    # ---- shared paths (edit these two lines if anything changes) -----------
+    - export REPO_ROOT="/home/malandev/repositories/knba"
+    - export PY_VERSION="3.12"
+    - export NODE_VERSION="24"
+    - export PY_VENV="/home/malandev/virtualenv/api.knba.org.np/${PY_VERSION}/bin/activate"
+    - export NODE_VENV="/home/malandev/nodevenv/knba.org.np/${NODE_VERSION}/bin/activate"
+    - export PY_APP_ROOT="/home/malandev/api.knba.org.np"
+    - export NODE_APP_ROOT="/home/malandev/knba.org.np"
+
+    # ---- backend (Django) -------------------------------------------------
+    # Code lives at $REPO_ROOT/backend; Passenger app root is $PY_APP_ROOT.
+    # The passenger_wsgi.py in $PY_APP_ROOT inserts $REPO_ROOT/backend into sys.path.
+    - source "$PY_VENV" && cd "$REPO_ROOT/backend" && pip install --upgrade pip
+    - source "$PY_VENV" && cd "$REPO_ROOT/backend" && pip install -r requirements.txt
+    - source "$PY_VENV" && cd "$REPO_ROOT/backend" && python manage.py migrate --noinput
+    - source "$PY_VENV" && cd "$REPO_ROOT/backend" && python manage.py collectstatic --noinput
+    - mkdir -p "$PY_APP_ROOT/tmp"
+    - touch "$PY_APP_ROOT/tmp/restart.txt"
+
+    # ---- frontend (Next.js) ----------------------------------------------
+    # Code lives at $REPO_ROOT; Passenger app root is $NODE_APP_ROOT.
+    # The server.js in $NODE_APP_ROOT requires the built Next app from $REPO_ROOT.
+    - source "$NODE_VENV" && cd "$REPO_ROOT" && npm ci
+    - source "$NODE_VENV" && cd "$REPO_ROOT" && npm run build
+    - mkdir -p "$NODE_APP_ROOT/tmp"
+    - touch "$NODE_APP_ROOT/tmp/restart.txt"

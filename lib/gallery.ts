@@ -1,4 +1,5 @@
 import { galleryItems as fallbackGalleryItems, heroSlides } from "@/lib/site-data";
+import { MEDIA_BASE_URL } from "@/lib/api";
 
 export type GalleryRecord = {
   id?: number;
@@ -28,7 +29,7 @@ export function resolveGalleryImageSrc(src: string) {
     return src;
   }
 
-  return `http://127.0.0.1:8000${src.startsWith("/") ? src : `/${src}`}`;
+  return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
 export const fallbackGalleryRecords: GalleryRecord[] = fallbackGalleryItems.map(

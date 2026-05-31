@@ -1,4 +1,31 @@
-export const API_BASE_URL = "http://127.0.0.1:8000/api";
+const DEFAULT_BACKEND_ORIGIN = "http://127.0.0.1:8000";
+
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+const configuredApiBase = trimTrailingSlash(
+  process.env.NEXT_PUBLIC_API_BASE_URL || `${DEFAULT_BACKEND_ORIGIN}/api`,
+);
+
+export const API_BASE_URL = configuredApiBase;
+
+export const MEDIA_BASE_URL = trimTrailingSlash(
+  process.env.NEXT_PUBLIC_MEDIA_BASE_URL ||
+    configuredApiBase.replace(/\/api\/?$/, "") ||
+    DEFAULT_BACKEND_ORIGIN,
+);
+
+export function resolveBackendAssetUrl(src: string) {
+  if (!src) {
+    return "";
+  }
+  if (/^(https?:|blob:|data:)/i.test(src)) {
+    return src;
+  }
+  const normalized = src.startsWith("/") ? src : `/${src}`;
+  return `${MEDIA_BASE_URL}${normalized}`;
+}
 
 const ADMIN_SESSION_KEY = "knba_admin_session";
 

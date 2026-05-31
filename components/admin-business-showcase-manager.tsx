@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
+import { API_BASE_URL, MEDIA_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import { NepalFlagIcon } from "@/components/nepal-flag-icon";
 import {
   focusFirstFormField,
@@ -166,7 +166,7 @@ function resolveBusinessImageSrc(src: string) {
     return src;
   }
 
-  return `http://127.0.0.1:8000${src.startsWith("/") ? src : `/${src}`}`;
+  return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
 function normalizeBusinessShowcaseRecord(record: Partial<BusinessShowcaseRecord>) {

@@ -50,3 +50,7 @@ env/
 backend/.git_backup/
 backend/media/
 backend/staticfiles/
+
+# build artifacts
+next-build.tar.gz
+*.tar.gz
