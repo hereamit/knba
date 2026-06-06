@@ -13,8 +13,8 @@ export function AdminLoginForm() {
   const { profile } = useOrganizationProfile();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [login, setLogin] = useState("admin@knba.org.np");
-  const [password, setPassword] = useState("knba-admin");
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <div className="w-full max-w-md">
@@ -41,10 +41,6 @@ export function AdminLoginForm() {
           <p className="text-sm font-medium text-slate-600">{profile.organization_name}</p>
         </div>
       </div>
-      <h1 className="text-3xl font-bold text-primary">
-        Sign in to the {profile.short_name} admin dashboard.
-      </h1>
-
       <form
         className="mt-6 space-y-5"
         onKeyDown={moveToNextFormField}
@@ -76,30 +72,24 @@ export function AdminLoginForm() {
           }
         }}
       >
-        <label className="block">
-          <span className="mb-2 block text-sm font-semibold text-primary">
-            Email or Username
-          </span>
-          <input
-            type="text"
-            required
-            value={login}
-            onChange={(event) => setLogin(event.target.value)}
-            className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-2 block text-sm font-semibold text-primary">
-            Password
-          </span>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
-          />
-        </label>
+        <input
+          type="text"
+          required
+          autoComplete="username"
+          placeholder="Email or username"
+          value={login}
+          onChange={(event) => setLogin(event.target.value)}
+          className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
+        />
+        <input
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="Password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
+        />
         {error ? (
           <div className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {error}
