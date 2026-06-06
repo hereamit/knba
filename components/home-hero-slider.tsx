@@ -21,7 +21,7 @@ export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <div className="panel overflow-hidden rounded-[2rem]">
-      <div className="relative h-[420px] md:h-[460px] bg-slate-100">
+      <div className="relative h-[420px] md:h-[460px]">
         {slides.map((slide, index) => (
           <div
             key={slide.title}
@@ -34,8 +34,7 @@ export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
               alt={slide.title}
               fill
               unoptimized
-              sizes="100vw"
-              className="object-contain"
+              className="object-cover"
               priority={index === 0}
             />
           </div>
