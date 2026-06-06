@@ -19,7 +19,6 @@ import {
 } from "@/lib/business-showcase";
 import {
   fallbackGalleryRecords,
-  getFallbackSliderSlides,
   mapGalleryRecordsToSlider,
   normalizeGalleryRecord,
   resolveGalleryImageSrc,
@@ -180,11 +179,11 @@ export default function HomePage() {
 
   return (
     <div className="pb-20">
-      <section className="section-wrap pt-6 md:pt-10">
-        <HomeHeroSlider
-          slides={sliderSlides.length ? sliderSlides : getFallbackSliderSlides()}
-        />
-      </section>
+      {sliderSlides.length ? (
+        <section className="section-wrap pt-6 md:pt-10">
+          <HomeHeroSlider slides={sliderSlides} />
+        </section>
+      ) : null}
 
       <section className="section-wrap relative z-10 mt-4 md:-mt-2">
         <div className="grid gap-4 md:grid-cols-4">

@@ -72,12 +72,8 @@ export function getFallbackSliderSlides() {
 }
 
 export function mapGalleryRecordsToSlider(records: GalleryRecord[]) {
-  const featuredRecords = records.filter((item) => item.is_featured && item.image_src);
-  const sliderRecords = featuredRecords.length
-    ? featuredRecords
-    : records.filter((item) => item.show_in_slider && item.image_src);
-
-  return sliderRecords
+  return records
+    .filter((item) => item.show_in_slider && item.image_src)
     .slice(0, 5)
     .map((item) => ({
       eyebrow: item.category,
