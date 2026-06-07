@@ -256,7 +256,7 @@ export default function BusinessShowcasePage() {
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary-soft">
-                Featured Sponsors
+                Sponsors
               </p>
               <h2 className="display-font mt-3 text-[2rem] font-semibold leading-tight text-primary md:text-[2.35rem]">
                 Featured Sponsors
@@ -307,7 +307,7 @@ export default function BusinessShowcasePage() {
       <section className="pb-20">
         <div className="rounded-[1.9rem] border border-line bg-[linear-gradient(135deg,#edf3ff,#ffffff)] px-6 py-7 shadow-[0_18px_40px_rgba(18,31,69,0.08)] md:px-8">
           <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary-soft">
-            Business Showcase
+            Directory
           </p>
           <h2 className="display-font mt-3 text-[2rem] font-semibold leading-tight text-primary md:text-[2.35rem]">
             Business Showcase

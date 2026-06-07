@@ -18,6 +18,7 @@ from .views import (
     HeroSlideViewSet,
     LoginView,
     MemberProfileViewSet,
+    MemberSubmissionViewSet,
     OrganizationProfileViewSet,
     ServiceItemViewSet,
     SiteSettingsView,
@@ -38,6 +39,11 @@ router.register(
     "business-showcase-submissions",
     BusinessShowcaseSubmissionViewSet,
     basename="business-showcase-submissions",
+)
+router.register(
+    "member-submissions",
+    MemberSubmissionViewSet,
+    basename="member-submissions",
 )
 router.register("events", EventViewSet, basename="events")
 router.register("contact-submissions", ContactSubmissionViewSet, basename="contact-submissions")

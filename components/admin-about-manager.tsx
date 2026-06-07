@@ -14,6 +14,10 @@ import {
 } from "@/lib/site-settings";
 
 type AboutFormState = {
+  about_eyebrow: string;
+  about_title: string;
+  about_quote: string;
+  about_quote_label: string;
   history_text: string;
   founder_message: string;
   president_message: string;
@@ -25,6 +29,10 @@ const emptySummary = defaultAboutPageRecord;
 
 function getAboutFormState(settings: SiteSettingsRecord): AboutFormState {
   return {
+    about_eyebrow: settings.about_eyebrow,
+    about_title: settings.about_title,
+    about_quote: settings.about_quote,
+    about_quote_label: settings.about_quote_label,
     history_text: settings.history_text,
     founder_message: settings.founder_message,
     president_message: settings.president_message,
@@ -216,6 +224,10 @@ export function AdminAboutManager() {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
+                about_eyebrow: form.about_eyebrow.trim(),
+                about_title: form.about_title.trim(),
+                about_quote: form.about_quote.trim(),
+                about_quote_label: form.about_quote_label.trim(),
                 history_text: form.history_text.trim(),
                 founder_message: form.founder_message.trim(),
                 president_message: form.president_message.trim(),
@@ -256,6 +268,55 @@ export function AdminAboutManager() {
       >
         <div className="mx-auto max-w-[64rem]">
           <div className="grid gap-3 md:grid-cols-2 md:gap-x-8">
+            <label className="admin-master-label">
+              <span>About Us &mdash; Eyebrow</span>
+              <input
+                value={form.about_eyebrow}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, about_eyebrow: event.target.value }))
+                }
+                className="admin-master-input"
+                required
+              />
+            </label>
+
+            <label className="admin-master-label">
+              <span>About Us &mdash; Quote Label</span>
+              <input
+                value={form.about_quote_label}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, about_quote_label: event.target.value }))
+                }
+                className="admin-master-input"
+                required
+              />
+            </label>
+
+            <label className="admin-master-label md:col-span-2">
+              <span>About Us &mdash; Title</span>
+              <input
+                value={form.about_title}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, about_title: event.target.value }))
+                }
+                className="admin-master-input"
+                required
+              />
+            </label>
+
+            <label className="admin-master-label md:col-span-2">
+              <span>About Us &mdash; Quote</span>
+              <textarea
+                value={form.about_quote}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, about_quote: event.target.value }))
+                }
+                className="admin-master-textarea"
+                rows={3}
+                required
+              />
+            </label>
+
             <label className="admin-master-label md:col-span-2">
               <span>Association History</span>
               <textarea

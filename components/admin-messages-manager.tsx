@@ -1,137 +1,112 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
+import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
+import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 
-type ContactSubmissionRecord = {
-  id: number;
-  full_name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
+type Counts = {
+  contactTotal: number;
+  contactUnread: number;
+  businessTotal: number;
+  businessPending: number;
+  memberTotal: number;
+  memberPending: number;
 };
 
-type BusinessShowcaseSubmissionRecord = {
-  id: number;
-  submitter_name: string;
-  submitter_email: string;
-  name: string;
-  category: string;
-  description: string;
-  phone: string;
-  address: string;
-  is_read?: boolean;
-  review_status: string;
-  created_at: string;
+const initialCounts: Counts = {
+  contactTotal: 0,
+  contactUnread: 0,
+  businessTotal: 0,
+  businessPending: 0,
+  memberTotal: 0,
+  memberPending: 0,
 };
-
-function formatDate(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
 
 export function AdminMessagesManager() {
-  const router = useRouter();
-  const [contactMessages, setContactMessages] = useState<ContactSubmissionRecord[]>([]);
-  const [businessMessages, setBusinessMessages] = useState<BusinessShowcaseSubmissionRecord[]>([]);
+  const [counts, setCounts] = useState<Counts>(initialCounts);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadMessages = useCallback(async () => {
-    const accessToken = await getValidAdminAccessToken();
-    const [contactResponse, businessResponse] = await Promise.all([
-      fetch(`${API_BASE_URL}/contact-submissions/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store",
-      }),
-      fetch(`${API_BASE_URL}/business-showcase-submissions/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store",
-      }),
+  const load = useCallback(async () => {
+    const token = await getValidAdminAccessToken();
+    const headers = { Authorization: `Bearer ${token}` };
+    const [contactRes, businessRes, memberRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/contact-submissions/`, { headers, cache: "no-store" }),
+      fetch(`${API_BASE_URL}/business-showcase-submissions/`, { headers, cache: "no-store" }),
+      fetch(`${API_BASE_URL}/member-submissions/`, { headers, cache: "no-store" }),
     ]);
 
-    if (!contactResponse.ok) {
-      throw new Error("Unable to load contact messages.");
-    }
-
-    if (!businessResponse.ok) {
-      throw new Error("Unable to load business showcase submissions.");
-    }
-
-    const [contactData, businessData] = await Promise.all([
-      contactResponse.json() as Promise<ContactSubmissionRecord[]>,
-      businessResponse.json() as Promise<BusinessShowcaseSubmissionRecord[]>,
+    const [contact, business, members] = await Promise.all([
+      contactRes.ok ? (contactRes.json() as Promise<Array<{ is_read: boolean }>>) : [],
+      businessRes.ok
+        ? (businessRes.json() as Promise<Array<{ review_status: string }>>)
+        : [],
+      memberRes.ok
+        ? (memberRes.json() as Promise<Array<{ review_status: string }>>)
+        : [],
     ]);
 
-    setContactMessages(contactData);
-    setBusinessMessages(businessData);
+    setCounts({
+      contactTotal: contact.length,
+      contactUnread: contact.filter((m) => !m.is_read).length,
+      businessTotal: business.length,
+      businessPending: business.filter((m) => m.review_status === "pending").length,
+      memberTotal: members.length,
+      memberPending: members.filter((m) => m.review_status === "pending").length,
+    });
   }, []);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    const run = async () => {
+    let cancelled = false;
+    (async () => {
       try {
-        await loadMessages();
-        if (!isCancelled) {
-          setError("");
-        }
-      } catch (requestError) {
-        if (!isCancelled) {
-          setError(
-            requestError instanceof Error
-              ? requestError.message
-              : "Unable to load portal messages.",
-          );
-        }
+        await load();
+        if (!cancelled) setError("");
+      } catch (e) {
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : "Unable to load message counts.");
       } finally {
-        if (!isCancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
-    };
-
-    void run();
-
+    })();
     return () => {
-      isCancelled = true;
+      cancelled = true;
     };
-  }, [loadMessages]);
+  }, [load]);
 
-  const pendingBusinessMessages = useMemo(
-    () => businessMessages.filter((item) => item.review_status === "pending"),
-    [businessMessages],
-  );
+  const cards = [
+    {
+      label: "General Inquiry",
+      href: "/admin/messages/contact",
+      description: "Contact form submissions from public visitors.",
+      total: counts.contactTotal,
+      pendingLabel: `${counts.contactUnread} unread`,
+      accent: "from-blue-500 to-indigo-600",
+    },
+    {
+      label: "Business Ad",
+      href: "/admin/messages/business",
+      description: "Business showcase ads submitted for review.",
+      total: counts.businessTotal,
+      pendingLabel: `${counts.businessPending} pending`,
+      accent: "from-amber-500 to-orange-600",
+    },
+    {
+      label: "Member Submission",
+      href: "/admin/messages/members",
+      description: "Self-submitted member profiles waiting for approval.",
+      total: counts.memberTotal,
+      pendingLabel: `${counts.memberPending} pending`,
+      accent: "from-emerald-500 to-green-600",
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Messages"
-        description="Review incoming contact requests and business showcase submissions."
+        description="All incoming form submissions, grouped by category."
       />
 
       {error ? (
@@ -140,177 +115,32 @@ export function AdminMessagesManager() {
         </div>
       ) : null}
 
-      <section className="admin-card rounded-[1.2rem] p-6">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-primary">
-              Business Showcase Messages
+      <section className="grid gap-4 md:grid-cols-3">
+        {cards.map((card) => (
+          <Link
+            key={card.href}
+            href={card.href}
+            className="admin-card group rounded-[1.2rem] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(18,31,69,0.12)]"
+          >
+            <div
+              className={`mb-3 inline-flex rounded-full bg-gradient-to-r ${card.accent} px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.16em] text-white`}
+            >
+              {card.pendingLabel}
+            </div>
+            <h2 className="text-xl font-bold text-slate-800">{card.label}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              {card.description}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Open each submission in a dedicated page to review details and approval status.
-            </p>
-          </div>
-          <span className="admin-badge">{pendingBusinessMessages.length} Pending</span>
-        </div>
-
-        <div className="mt-5 overflow-x-auto">
-          {loading ? (
-            <div className="rounded-[1rem] bg-slate-50 px-4 py-4 text-sm text-slate-500">
-              Loading business showcase messages...
+            <div className="mt-5 flex items-end justify-between">
+              <span className="text-3xl font-bold text-primary">
+                {loading ? "..." : card.total}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-soft">
+                View →
+              </span>
             </div>
-          ) : businessMessages.length ? (
-            <table className="admin-master-table min-w-full border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left">
-                  <th>Business</th>
-                  <th>Category</th>
-                  <th>Phone</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th className="text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {businessMessages.map((message) => {
-                  const isPending = message.review_status === "pending";
-
-                  return (
-                    <tr
-                      key={message.id}
-                      className="cursor-pointer"
-                      onClick={() => router.push(`/admin/messages/business/${message.id}`)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          router.push(`/admin/messages/business/${message.id}`);
-                        }
-                      }}
-                      tabIndex={0}
-                    >
-                      <td className="rounded-l-[0.9rem] bg-slate-50/90 px-3 py-2 text-sm text-slate-700">
-                        <p className="font-semibold text-slate-800">{message.name}</p>
-                      </td>
-                      <td className="bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                        {message.category}
-                      </td>
-                      <td className="bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                        {message.phone}
-                      </td>
-                      <td className="bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                        {formatDate(message.created_at)}
-                      </td>
-                      <td className="bg-slate-50/90 px-3 py-2 text-sm">
-                        <span
-                          className={`admin-badge ${
-                            isPending ? "admin-badge-inactive" : "admin-badge-active"
-                          }`}
-                        >
-                          {message.review_status}
-                        </span>
-                      </td>
-                      <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-2 text-right">
-                        <Link
-                          href={`/admin/messages/business/${message.id}`}
-                          onClick={(event) => event.stopPropagation()}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            <div className="rounded-[1rem] bg-slate-50 px-4 py-4 text-sm text-slate-500">
-              No business showcase messages found yet.
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="admin-card rounded-[1.2rem] p-6">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-primary">
-            Contact Messages
-          </p>
-          <p className="mt-1 text-sm text-slate-500">
-            Open each message in a dedicated page to read the conversation history and reply.
-          </p>
-        </div>
-
-        <div className="mt-5 overflow-x-auto">
-          {loading ? (
-            <div className="rounded-[1rem] bg-slate-50 px-4 py-4 text-sm text-slate-500">
-              Loading contact messages...
-            </div>
-          ) : contactMessages.length ? (
-            <table className="admin-master-table min-w-full border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left">
-                  <th>Name</th>
-                  <th>Subject</th>
-                  <th>Email</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th className="text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contactMessages.map((message) => (
-                  <tr
-                    key={message.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/admin/messages/contact/${message.id}`)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        router.push(`/admin/messages/contact/${message.id}`);
-                      }
-                    }}
-                    tabIndex={0}
-                  >
-                    <td className="rounded-l-[0.9rem] bg-slate-50/90 px-3 py-2 text-sm font-semibold text-slate-800">
-                      {message.full_name}
-                    </td>
-                    <td className="bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                      {message.subject}
-                    </td>
-                    <td className="bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                      {message.email}
-                    </td>
-                    <td className="bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                      {formatDate(message.created_at)}
-                    </td>
-                    <td className="bg-slate-50/90 px-3 py-2 text-sm">
-                      <span
-                        className={`admin-badge ${
-                          message.is_read ? "admin-badge-active" : "admin-badge-inactive"
-                        }`}
-                      >
-                        {message.is_read ? "read" : "unread"}
-                      </span>
-                    </td>
-                    <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-2 text-right">
-                      <Link
-                        href={`/admin/messages/contact/${message.id}`}
-                        onClick={(event) => event.stopPropagation()}
-                        className="admin-table-btn admin-table-btn-edit"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="rounded-[1rem] bg-slate-50 px-4 py-4 text-sm text-slate-500">
-              No contact messages found yet.
-            </div>
-          )}
-        </div>
+          </Link>
+        ))}
       </section>
     </div>
   );

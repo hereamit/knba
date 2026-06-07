@@ -78,6 +78,48 @@ a {
   font-family: var(--font-display);
 }
 
+/* Shared heading scale — one knob to retune across the site. */
+.h-hero,
+.h-section,
+.h-sub,
+.h-card {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.h-hero {
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+.h-section {
+  font-size: 1.65rem;
+  line-height: 1.15;
+}
+.h-sub {
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+.h-card {
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+  .h-hero {
+    font-size: 1.8rem;
+  }
+  .h-section {
+    font-size: 2.05rem;
+  }
+  .h-sub {
+    font-size: 1.85rem;
+  }
+  .h-card {
+    font-size: 1.2rem;
+  }
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);

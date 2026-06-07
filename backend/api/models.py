@@ -103,6 +103,18 @@ class SiteSettings(TimeStampedModel):
         )
     )
     emergency_contact = models.CharField(max_length=50, default="+977-1-5350000")
+    about_eyebrow = models.CharField(max_length=80, default="About Us")
+    about_title = models.CharField(
+        max_length=255,
+        default="Who we are and what KNBA stands for.",
+    )
+    about_quote = models.TextField(
+        default=(
+            "Together, the merchants of Khichapokhari and New Road can shape a "
+            "market that's organized, fair, and worthy of its history."
+        )
+    )
+    about_quote_label = models.CharField(max_length=80, default="Founding Vision")
     history_text = models.TextField(blank=True)
     founder_name = models.CharField(max_length=120, blank=True)
     founder_title = models.CharField(max_length=120, blank=True)
@@ -116,6 +128,7 @@ class SiteSettings(TimeStampedModel):
     vision_text = models.TextField(blank=True)
     map_embed_url = models.TextField(blank=True)
     social_links = models.JSONField(default=list, blank=True)
+    member_submissions_open = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = "Site settings"
@@ -376,6 +389,53 @@ class BusinessShowcaseSubmission(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         optimize_uploaded_image(self.image)
+        super().save(*args, **kwargs)
+
+
+class MemberSubmission(TimeStampedModel):
+    class ReviewStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
+    submitter_name = models.CharField(max_length=120)
+    submitter_email = models.EmailField()
+    submitter_phone = models.CharField(max_length=50, blank=True)
+    name = models.CharField(max_length=120)
+    role = models.CharField(max_length=120)
+    category = models.CharField(
+        max_length=32,
+        choices=MemberProfile.Category.choices,
+        default=MemberProfile.Category.EXECUTIVE,
+    )
+    phone = models.CharField(max_length=50)
+    email = models.EmailField()
+    note = models.CharField(max_length=255, blank=True)
+    photo = models.ImageField(upload_to="members/submissions/", blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    review_status = models.CharField(
+        max_length=20,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+    )
+    admin_notes = models.TextField(blank=True)
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    published_member = models.ForeignKey(
+        MemberProfile,
+        on_delete=models.SET_NULL,
+        related_name="source_submissions",
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        ordering = ("-created_at", "id")
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.get_review_status_display()})"
+
+    def save(self, *args, **kwargs):
+        optimize_uploaded_image(self.photo)
         super().save(*args, **kwargs)
 
 

@@ -12,6 +12,7 @@ from .models import (
     GalleryItem,
     HeroSlide,
     MemberProfile,
+    MemberSubmission,
     OrganizationProfile,
     ServiceItem,
     SiteSettings,
@@ -117,6 +118,21 @@ class BusinessShowcaseSubmissionAdmin(admin.ModelAdmin):
     )
     list_filter = ("review_status", "category", "created_at")
     search_fields = ("name", "submitter_name", "submitter_email", "phone", "address")
+
+
+@admin.register(MemberSubmission)
+class MemberSubmissionAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "submitter_name",
+        "role",
+        "category",
+        "review_status",
+        "published_member",
+        "created_at",
+    )
+    list_filter = ("review_status", "category", "created_at")
+    search_fields = ("name", "submitter_name", "submitter_email", "phone", "email")
 
 
 @admin.register(Event)

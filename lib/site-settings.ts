@@ -6,6 +6,10 @@ export type SiteSettingsRecord = {
   office_address: string;
   office_phone: string;
   office_email: string;
+  about_eyebrow: string;
+  about_title: string;
+  about_quote: string;
+  about_quote_label: string;
   history_text: string;
   founder_name: string;
   founder_title: string;
@@ -26,6 +30,11 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   office_address: "Khichapokhari, New Road, Kathmandu",
   office_phone: "+977-1-5350000",
   office_email: "secretariat@knba.org.np",
+  about_eyebrow: "About Us",
+  about_title: "Who we are and what KNBA stands for.",
+  about_quote:
+    "Together, the merchants of Khichapokhari and New Road can shape a market that's organized, fair, and worthy of its history.",
+  about_quote_label: "Founding Vision",
   history_text: siteHistory,
   founder_name: "Hari Krishna Tuladhar",
   founder_title: "Founder Chair",
@@ -68,6 +77,22 @@ export function normalizeSiteSettingsRecord(
       typeof record.office_email === "string" && record.office_email.trim()
         ? record.office_email
         : defaultSiteSettings.office_email,
+    about_eyebrow:
+      typeof record.about_eyebrow === "string" && record.about_eyebrow.trim()
+        ? record.about_eyebrow
+        : defaultSiteSettings.about_eyebrow,
+    about_title:
+      typeof record.about_title === "string" && record.about_title.trim()
+        ? record.about_title
+        : defaultSiteSettings.about_title,
+    about_quote:
+      typeof record.about_quote === "string" && record.about_quote.trim()
+        ? record.about_quote
+        : defaultSiteSettings.about_quote,
+    about_quote_label:
+      typeof record.about_quote_label === "string" && record.about_quote_label.trim()
+        ? record.about_quote_label
+        : defaultSiteSettings.about_quote_label,
     history_text:
       typeof record.history_text === "string" && record.history_text.trim()
         ? record.history_text

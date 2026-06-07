@@ -86,31 +86,41 @@ export function BusinessShowcaseAdvertiseModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
+  const labelClass =
+    "mb-1 block text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-primary";
+  const inputClass =
+    "w-full rounded-lg border border-line bg-[#f7f9ff] px-3 py-2 text-[13px] outline-none transition focus:border-primary-soft focus:bg-white";
+
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#091224]/68 p-4 backdrop-blur-sm">
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[1.6rem] bg-white shadow-[0_30px_70px_rgba(9,18,36,0.3)]">
-        <div className="bg-[linear-gradient(135deg,#16213f,#273c75)] px-5 py-5 text-white md:px-6">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#091224]/68 p-3 backdrop-blur-sm md:p-4">
+      <div className="relative flex max-h-[96vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.4rem] bg-white shadow-[0_30px_70px_rgba(9,18,36,0.3)]">
+        <div className="relative overflow-hidden bg-[linear-gradient(135deg,#16213f,#273c75,#1e3799)] px-5 py-3.5 text-white">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#fbbf24]/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-[#5d6cda]/30 blur-3xl" />
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/14 text-base font-semibold text-white"
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/14 text-sm font-semibold text-white transition hover:bg-white/24"
             aria-label="Close advertise form"
           >
-            x
+            ×
           </button>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/72">
-            Advertise Your Business
-          </p>
-          <h2 className="display-font mt-2 text-2xl font-semibold md:text-[2rem]">
-            Send your business details to KNBA for review.
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-white/78">
-            Your submission goes to the admin review queue first. Once verified, it can be
-            published to the Business Showcase with minimal admin work.
-          </p>
+          <div className="relative flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#fbbf24,#f97316)] text-base font-black text-white shadow-[0_10px_25px_rgba(249,115,22,0.35)]">
+              ★
+            </span>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-white/72">
+                Advertise Your Business
+              </p>
+              <h2 className="display-font text-lg font-bold leading-tight md:text-xl">
+                Showcase your brand on KNBA.
+              </h2>
+            </div>
+          </div>
         </div>
 
-        <div className="p-5 md:p-6">
+        <div className="overflow-y-auto px-5 py-4">
           {submitted ? (
             <div className="space-y-4">
               <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm font-medium text-emerald-700">
@@ -128,7 +138,7 @@ export function BusinessShowcaseAdvertiseModal({
             </div>
           ) : (
             <form
-              className="grid gap-4"
+              className="grid gap-3"
               onKeyDown={moveToNextFormField}
               onBlurCapture={resetEnterNavigationState}
               onSubmit={async (event) => {
@@ -190,11 +200,9 @@ export function BusinessShowcaseAdvertiseModal({
                 }
               }}
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-3">
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Contact Person
-                  </span>
+                  <span className={labelClass}>Contact Person</span>
                   <input
                     ref={firstInputRef}
                     type="text"
@@ -202,68 +210,28 @@ export function BusinessShowcaseAdvertiseModal({
                     onChange={(event) =>
                       setForm((current) => ({ ...current, submitter_name: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
+                    className={inputClass}
                     placeholder="Your name"
                     required
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Contact Email
-                  </span>
+                  <span className={labelClass}>Contact Email</span>
                   <input
                     type="email"
                     value={form.submitter_email}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, submitter_email: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
+                    className={inputClass}
                     placeholder="name@example.com"
                     required
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Business Name
-                  </span>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, name: event.target.value }))
-                    }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
-                    placeholder="Business or brand name"
-                    required
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Category
-                  </span>
-                  <input
-                    list="business-showcase-category-options"
-                    type="text"
-                    value={form.category}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, category: event.target.value }))
-                    }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
-                    placeholder="Retail, Jewellery, Electronics..."
-                    required
-                  />
-                  <datalist id="business-showcase-category-options">
-                    {categoryOptions.map((option) => (
-                      <option key={option} value={option} />
-                    ))}
-                  </datalist>
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Business Phone
-                  </span>
-                  <div className="flex items-center overflow-hidden rounded-[0.95rem] border border-line bg-[#f7f9ff]">
-                    <span className="border-r border-line px-4 py-3 text-sm font-semibold text-primary">
+                  <span className={labelClass}>Business Phone</span>
+                  <div className="flex items-center overflow-hidden rounded-lg border border-line bg-[#f7f9ff] focus-within:border-primary-soft focus-within:bg-white">
+                    <span className="border-r border-line px-2.5 py-2 text-[12px] font-semibold text-primary">
                       {NEPAL_COUNTRY_CODE}
                     </span>
                     <input
@@ -284,131 +252,153 @@ export function BusinessShowcaseAdvertiseModal({
                         );
                         setForm((current) => ({ ...current, phone: digitsOnly }));
                       }}
-                      className="w-full bg-transparent px-4 py-3 text-sm outline-none"
+                      className="w-full bg-transparent px-3 py-2 text-[13px] outline-none"
                       placeholder="98XXXXXXXX"
                       required
                     />
                   </div>
                   {phoneError ? (
-                    <p className="mt-1 text-xs font-medium text-rose-700">{phoneError}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-700">{phoneError}</p>
                   ) : null}
                 </label>
+
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Address
-                  </span>
+                  <span className={labelClass}>Business Name</span>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, name: event.target.value }))
+                    }
+                    className={inputClass}
+                    placeholder="Business or brand name"
+                    required
+                  />
+                </label>
+                <label className="block">
+                  <span className={labelClass}>Category</span>
+                  <input
+                    list="business-showcase-category-options"
+                    type="text"
+                    value={form.category}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, category: event.target.value }))
+                    }
+                    className={inputClass}
+                    placeholder="Retail, Jewellery..."
+                    required
+                  />
+                  <datalist id="business-showcase-category-options">
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option} />
+                    ))}
+                  </datalist>
+                </label>
+                <label className="block">
+                  <span className={labelClass}>Address</span>
                   <input
                     type="text"
                     value={form.address}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, address: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
+                    className={inputClass}
                     placeholder="Business address"
                     required
                   />
                 </label>
-                <label className="block md:col-span-2">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Description
-                  </span>
+
+                <label className="block md:col-span-3">
+                  <span className={labelClass}>Description</span>
                   <textarea
-                    rows={4}
+                    rows={2}
                     value={form.description}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, description: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
+                    className={`${inputClass} resize-none`}
                     placeholder="Briefly describe what your business offers."
                   />
                 </label>
+
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Website Url
-                  </span>
+                  <span className={labelClass}>Website</span>
                   <input
                     type="url"
                     value={form.website_url}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, website_url: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
+                    className={inputClass}
                     placeholder="https://"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Facebook Url
-                  </span>
+                  <span className={labelClass}>Facebook</span>
                   <input
                     type="url"
                     value={form.facebook_url}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, facebook_url: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
-                    placeholder="https://facebook.com/..."
+                    className={inputClass}
+                    placeholder="facebook.com/..."
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Instagram Url
-                  </span>
+                  <span className={labelClass}>Instagram</span>
                   <input
                     type="url"
                     value={form.instagram_url}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, instagram_url: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
-                    placeholder="https://instagram.com/..."
+                    className={inputClass}
+                    placeholder="instagram.com/..."
                   />
                 </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Ecommerce Url
-                  </span>
+
+                <label className="block md:col-span-1">
+                  <span className={labelClass}>Ecommerce</span>
                   <input
                     type="url"
                     value={form.ecommerce_url}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, ecommerce_url: event.target.value }))
                     }
-                    className="w-full rounded-[0.95rem] border border-line bg-[#f7f9ff] px-4 py-3 text-sm outline-none transition focus:border-primary-soft"
+                    className={inputClass}
                     placeholder="https://"
                   />
                 </label>
                 <label className="block md:col-span-2">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    Business Image
-                  </span>
+                  <span className={labelClass}>Business Image</span>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
-                    className="block w-full rounded-[0.95rem] border border-dashed border-line bg-[#f7f9ff] px-4 py-3 text-sm text-muted file:mr-4 file:rounded-full file:border-0 file:bg-[linear-gradient(135deg,#273c75,#1e3799)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+                    className="block w-full rounded-lg border border-dashed border-line bg-[#f7f9ff] px-2.5 py-1.5 text-[12px] text-muted file:mr-3 file:rounded-full file:border-0 file:bg-[linear-gradient(135deg,#273c75,#1e3799)] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
                   />
                 </label>
               </div>
 
               {error ? (
-                <div className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-medium text-rose-700">
                   {error}
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap justify-end gap-3">
+              <div className="flex flex-wrap justify-end gap-2.5 pt-1">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="inline-flex min-h-[2.75rem] items-center justify-center rounded-full border border-line px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary-soft"
+                  className="inline-flex min-h-[2.25rem] items-center justify-center rounded-full border border-line px-4 py-1.5 text-[13px] font-semibold text-primary transition hover:border-primary-soft"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-primary"
+                  className="inline-flex min-h-[2.25rem] items-center justify-center rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-5 py-1.5 text-[13px] font-bold text-white shadow-[0_10px_24px_rgba(235,47,6,0.25)] transition hover:-translate-y-0.5 disabled:opacity-60"
                 >
                   {submitting ? "Submitting..." : "Send To Admin"}
                 </button>

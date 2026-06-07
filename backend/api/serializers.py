@@ -15,6 +15,7 @@ from .models import (
     GalleryItem,
     HeroSlide,
     MemberProfile,
+    MemberSubmission,
     OrganizationProfile,
     ServiceItem,
     SiteSettings,
@@ -465,6 +466,72 @@ class BusinessShowcaseSubmissionSerializer(serializers.ModelSerializer):
             instance.image = None
 
         return super().update(instance, validated_data)
+
+
+class MemberSubmissionCreateSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(required=True, allow_null=False)
+
+    class Meta:
+        model = MemberSubmission
+        fields = (
+            "id",
+            "submitter_name",
+            "submitter_email",
+            "submitter_phone",
+            "name",
+            "role",
+            "category",
+            "phone",
+            "email",
+            "note",
+            "photo",
+            "review_status",
+            "created_at",
+        )
+        read_only_fields = ("id", "review_status", "created_at")
+
+
+class MemberSubmissionSerializer(serializers.ModelSerializer):
+    photo_src = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MemberSubmission
+        fields = (
+            "id",
+            "submitter_name",
+            "submitter_email",
+            "submitter_phone",
+            "name",
+            "role",
+            "category",
+            "phone",
+            "email",
+            "note",
+            "photo",
+            "photo_src",
+            "is_read",
+            "review_status",
+            "admin_notes",
+            "reviewed_at",
+            "published_member",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "created_at",
+            "updated_at",
+            "reviewed_at",
+            "published_member",
+        )
+
+    def get_photo_src(self, obj):
+        request = self.context.get("request")
+        if obj.photo:
+            if request is not None:
+                return request.build_absolute_uri(obj.photo.url)
+            return obj.photo.url
+        return ""
 
 
 class EventSerializer(serializers.ModelSerializer):

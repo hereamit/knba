@@ -1,4 +1,4 @@
-import { galleryItems as fallbackGalleryItems, heroSlides } from "@/lib/site-data";
+import { galleryItems as fallbackGalleryItems } from "@/lib/site-data";
 import { MEDIA_BASE_URL } from "@/lib/api";
 
 export type GalleryRecord = {
@@ -65,10 +65,6 @@ export function normalizeGalleryRecord(record: GalleryApiRecord, index = 0): Gal
     display_order: record.display_order ?? index + 1,
     is_active: record.is_active ?? true,
   };
-}
-
-export function getFallbackSliderSlides() {
-  return heroSlides;
 }
 
 export function mapGalleryRecordsToSlider(records: GalleryRecord[]) {

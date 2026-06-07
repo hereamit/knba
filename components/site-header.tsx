@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EnquiryModal } from "@/components/enquiry-modal";
+import { MemberSubmissionModal } from "@/components/member-submission-modal";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { API_BASE_URL } from "@/lib/api";
 import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
@@ -13,6 +14,8 @@ export function SiteHeader() {
   const { profile } = useOrganizationProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const [memberSubmissionOpen, setMemberSubmissionOpen] = useState(false);
+  const [submissionsOpen, setSubmissionsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notice, setNotice] = useState<null | typeof emergencyNotice>(null);
 
@@ -80,6 +83,28 @@ export function SiteHeader() {
     };
   }, []);
 
+  useEffect(() => {
+    let isCancelled = false;
+    const loadSettings = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/site-settings/`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { member_submissions_open?: boolean };
+        if (!isCancelled) {
+          setSubmissionsOpen(Boolean(data?.member_submissions_open));
+        }
+      } catch {
+        if (!isCancelled) setSubmissionsOpen(false);
+      }
+    };
+    void loadSettings();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   return (
     <>
       <header className="sticky top-0 z-50">
@@ -114,20 +139,28 @@ export function SiteHeader() {
           </div>
         ) : null}
         <div
-          className={`border-b border-white/10 bg-[linear-gradient(135deg,#273c75,#1e3799)] backdrop-blur-xl transition-all duration-300 ease-out ${
+          className={`border-b border-white/10 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             scrolled
-              ? "shadow-[0_22px_48px_rgba(17,29,66,0.24)]"
-              : "shadow-[0_16px_38px_rgba(30,55,153,0.24)]"
+              ? "bg-[linear-gradient(135deg,rgba(20,30,70,0.92),rgba(15,28,90,0.92))] shadow-[0_22px_48px_rgba(17,29,66,0.32)]"
+              : "bg-[linear-gradient(135deg,#273c75,#1e3799)] shadow-[0_16px_38px_rgba(30,55,153,0.24)]"
           }`}
         >
-          <div className="section-wrap flex items-center justify-between gap-4 py-4 transition-all duration-300 ease-out">
+          <div
+            className={`section-wrap flex items-center justify-between gap-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              scrolled ? "py-2" : "py-4"
+            }`}
+          >
             <Link
               href="/"
               className="flex items-center gap-2"
               onClick={() => setMenuOpen(false)}
             >
               {profile.logo_url ? (
-                <div className="relative h-12 w-32 overflow-hidden transition-all duration-300">
+                <div
+                  className={`relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    scrolled ? "h-9 w-24" : "h-12 w-32"
+                  }`}
+                >
                   <img
                     src={resolveOrganizationImageSrc(profile.logo_url)}
                     alt={profile.short_name}
@@ -135,12 +168,20 @@ export function SiteHeader() {
                   />
                 </div>
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-lg font-black text-white ring-1 ring-white/12 transition-all duration-300">
+                <div
+                  className={`flex items-center justify-center rounded-2xl bg-white/14 font-black text-white ring-1 ring-white/12 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    scrolled ? "h-9 w-9 text-base" : "h-12 w-12 text-lg"
+                  }`}
+                >
                   {profile.short_name.slice(0, 1)}
                 </div>
               )}
-              <div className="transition-all duration-300">
-                <p className="text-base font-bold text-[#f7f9ff] transition-all duration-300">
+              <div className="transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]">
+                <p
+                  className={`font-bold text-[#f7f9ff] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    scrolled ? "text-sm" : "text-base"
+                  }`}
+                >
                   {profile.organization_name}
                 </p>
               </div>
@@ -167,19 +208,31 @@ export function SiteHeader() {
                   </Link>
                 );
               })}
-              <button
-                type="button"
-                onClick={() => setEnquiryOpen(true)}
-                className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
-              >
-                Visitor Enquiry
-              </button>
+              {submissionsOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setMemberSubmissionOpen(true)}
+                  className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#16a34a,#22c55e)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(22,163,74,0.28)] transition hover:-translate-y-0.5"
+                >
+                  Submit Member Details
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEnquiryOpen(true)}
+                  className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
+                >
+                  Visitor Enquiry
+                </button>
+              )}
             </nav>
 
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
-              className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/18 bg-white/10 text-white transition-all duration-300 lg:hidden"
+              className={`flex items-center justify-center rounded-2xl border border-white/18 bg-white/10 text-white transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden ${
+                scrolled ? "h-9 w-9" : "h-12 w-12"
+              }`}
               aria-label="Toggle navigation"
             >
               <span className="space-y-1">
@@ -213,16 +266,29 @@ export function SiteHeader() {
                       </Link>
                     );
                   })}
-                  <button
-                    type="button"
-                    className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setEnquiryOpen(true);
-                    }}
-                  >
-                    Visitor Enquiry
-                  </button>
+                  {submissionsOpen ? (
+                    <button
+                      type="button"
+                      className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#16a34a,#22c55e)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(22,163,74,0.28)] transition hover:-translate-y-0.5"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMemberSubmissionOpen(true);
+                      }}
+                    >
+                      Submit Member Details
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setEnquiryOpen(true);
+                      }}
+                    >
+                      Visitor Enquiry
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -231,6 +297,9 @@ export function SiteHeader() {
       </header>
       {enquiryOpen ? (
         <EnquiryModal onClose={() => setEnquiryOpen(false)} />
+      ) : null}
+      {memberSubmissionOpen ? (
+        <MemberSubmissionModal onClose={() => setMemberSubmissionOpen(false)} />
       ) : null}
     </>
   );
