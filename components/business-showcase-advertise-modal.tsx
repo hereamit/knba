@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { PhoneNumbersInput } from "@/components/phone-numbers-input";
+import {
+  ensurePhoneEntries,
+  summarizePhoneEntries,
+  type PhoneEntry,
+} from "@/lib/phone";
 import { moveToNextFormField, resetEnterNavigationState } from "@/lib/enter-navigation";
-
-const NEPAL_COUNTRY_CODE = "+977";
 
 type AdvertiseFormState = {
   submitter_name: string;
@@ -12,7 +16,7 @@ type AdvertiseFormState = {
   name: string;
   category: string;
   description: string;
-  phone: string;
+  phoneEntries: PhoneEntry[];
   address: string;
   website_url: string;
   facebook_url: string;
@@ -20,19 +24,21 @@ type AdvertiseFormState = {
   ecommerce_url: string;
 };
 
-const emptyForm: AdvertiseFormState = {
-  submitter_name: "",
-  submitter_email: "",
-  name: "",
-  category: "",
-  description: "",
-  phone: "",
-  address: "",
-  website_url: "",
-  facebook_url: "",
-  instagram_url: "",
-  ecommerce_url: "",
-};
+function createEmptyForm(): AdvertiseFormState {
+  return {
+    submitter_name: "",
+    submitter_email: "",
+    name: "",
+    category: "",
+    description: "",
+    phoneEntries: ensurePhoneEntries([]),
+    address: "",
+    website_url: "",
+    facebook_url: "",
+    instagram_url: "",
+    ecommerce_url: "",
+  };
+}
 
 function getApiErrorMessage(payload: unknown, fallback: string) {
   if (payload && typeof payload === "object") {
@@ -66,7 +72,7 @@ export function BusinessShowcaseAdvertiseModal({
   onSubmitted: () => void;
   categoryOptions: string[];
 }) {
-  const [form, setForm] = useState<AdvertiseFormState>(emptyForm);
+  const [form, setForm] = useState<AdvertiseFormState>(createEmptyForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -137,10 +143,12 @@ export function BusinessShowcaseAdvertiseModal({
                 setError("");
 
                 try {
-                  if (form.phone.length !== 10) {
-                    setPhoneError("Enter exactly 10 digits after +977.");
-                    throw new Error("Enter exactly 10 digits after +977.");
+                  const phoneSummary = summarizePhoneEntries(form.phoneEntries);
+                  if (phoneSummary.error) {
+                    setPhoneError(phoneSummary.error);
+                    throw new Error(phoneSummary.error);
                   }
+                  setPhoneError("");
 
                   const payload = new FormData();
                   payload.append("submitter_name", form.submitter_name);
@@ -148,7 +156,7 @@ export function BusinessShowcaseAdvertiseModal({
                   payload.append("name", form.name);
                   payload.append("category", form.category);
                   payload.append("description", form.description);
-                  payload.append("phone", `${NEPAL_COUNTRY_CODE}-${form.phone}`);
+                  payload.append("phone", phoneSummary.value);
                   payload.append("address", form.address);
                   payload.append("website_url", form.website_url);
                   payload.append("facebook_url", form.facebook_url);
@@ -175,7 +183,7 @@ export function BusinessShowcaseAdvertiseModal({
                   }
 
                   setSubmitted(true);
-                  setForm(emptyForm);
+                  setForm(createEmptyForm());
                   setImageFile(null);
                   setPhoneError("");
                   onSubmitted();
@@ -262,36 +270,17 @@ export function BusinessShowcaseAdvertiseModal({
                   <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                     Business Phone
                   </span>
-                  <div className="flex items-center overflow-hidden rounded-[0.95rem] border border-line bg-[#f7f9ff]">
-                    <span className="border-r border-line px-4 py-3 text-sm font-semibold text-primary">
-                      {NEPAL_COUNTRY_CODE}
-                    </span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={10}
-                      value={form.phone}
-                      onChange={(event) => {
-                        const digitsOnly = event.target.value.replace(/\D/g, "");
-                        if (digitsOnly.length > 10) {
-                          setPhoneError("Only 10 digits are allowed after +977.");
-                          return;
-                        }
-                        setPhoneError(
-                          digitsOnly.length > 0 && digitsOnly.length < 10
-                            ? "Enter exactly 10 digits after +977."
-                            : "",
-                        );
-                        setForm((current) => ({ ...current, phone: digitsOnly }));
-                      }}
-                      className="w-full bg-transparent px-4 py-3 text-sm outline-none"
-                      placeholder="98XXXXXXXX"
-                      required
-                    />
-                  </div>
-                  {phoneError ? (
-                    <p className="mt-1 text-xs font-medium text-rose-700">{phoneError}</p>
-                  ) : null}
+                  <PhoneNumbersInput
+                    entries={form.phoneEntries}
+                    onChange={(phoneEntries) => {
+                      setForm((current) => ({ ...current, phoneEntries }));
+                      if (phoneError) {
+                        setPhoneError("");
+                      }
+                    }}
+                    tone="light"
+                    error={phoneError}
+                  />
                 </label>
                 <label className="block">
                   <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-primary">

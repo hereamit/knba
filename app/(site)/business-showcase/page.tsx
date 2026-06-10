@@ -10,6 +10,7 @@ import {
   normalizeBusinessShowcaseRecord,
   type BusinessShowcaseRecord,
 } from "@/lib/business-showcase";
+import { phoneTelHref, splitPhoneNumbers } from "@/lib/phone";
 import type { BusinessShowcaseItem } from "@/lib/site-data";
 
 function openBusinessUrl(url?: string) {
@@ -99,12 +100,14 @@ function BusinessCard({
         <div className="mt-5 space-y-2 text-sm leading-7 text-muted">
           <p>
             <span className="font-semibold text-primary">Phone:</span>{" "}
-            <a
-              href={`tel:${business.phone}`}
-              onClick={(event) => event.stopPropagation()}
-            >
-              {business.phone}
-            </a>
+            {splitPhoneNumbers(business.phone).map((number, index) => (
+              <span key={`${number}-${index}`}>
+                {index > 0 ? ", " : ""}
+                <a href={phoneTelHref(number)} onClick={(event) => event.stopPropagation()}>
+                  {number}
+                </a>
+              </span>
+            ))}
           </p>
           <p>
             <span className="font-semibold text-primary">Address:</span>{" "}
