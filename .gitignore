@@ -54,6 +54,3 @@ backend/staticfiles/
 # build artifacts
 next-build.tar.gz
 *.tar.gz
-
-# Claude Code local settings
-.claude/

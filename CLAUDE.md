@@ -2,78 +2,60 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project shape
+## What this is
 
-KNBA is a two-part app with **no shared build** — they run as separate processes and only communicate over HTTP:
+KNBA (Khichapokhari Newroad Business Association) is a two-part web app:
 
-- **Frontend** (repo root): Next.js 16 App Router + React 19 + Tailwind v4. Serves the public site and the admin panel. Talks to the backend purely through `fetch`.
-- **Backend** (`backend/`): Django 6 + Django REST Framework + SimpleJWT. Exposes a JSON API under `/api/`, the Django admin under `/dj-admin/`, and serves uploaded media under `/media/`.
+- **Frontend** — Next.js 16 (App Router, React 19, Tailwind v4) at the repo root.
+- **Backend** — Django 6 + Django REST Framework in `backend/`.
 
-Despite the workspace path being `django projects`, the root is the Next.js project. The Django project lives entirely under `backend/`.
+They are fully decoupled: no shared code, communicating only over HTTP/JSON. The frontend is a pure API client; all persistent content lives in the Django DB and is edited through the admin panel.
 
 ## Commands
 
-Frontend (run from repo root):
-```bash
-npm run dev      # Next dev server on http://localhost:3000
-npm run build    # Production build (uses --webpack, not turbopack)
-npm run start    # Serve the production build
-npm run lint     # eslint (flat config, next/core-web-vitals + typescript)
-```
+### Frontend (run from repo root)
+- `npm run dev` — dev server on :3000
+- `npm run build` — production build (note: pinned to `--webpack`, not Turbopack)
+- `npm run start` — serve the production build (or `node server.js`, the Passenger entry point)
+- `npm run lint` — ESLint (flat config, `eslint-config-next`)
 
-Backend (run from `backend/`, with the venv active):
-```bash
-python manage.py runserver          # API on http://127.0.0.1:8000 (frontend defaults to this)
-python manage.py migrate
-python manage.py createsuperuser     # login for /dj-admin/ AND for the frontend admin panel
-python manage.py seed_knba           # seed demo content (management command)
-python manage.py test                # run the test suite (tests in backend/api/tests.py)
-python manage.py test api.tests.SomeTest.test_method   # single test
-```
+### Backend (run from `backend/`, with the venv active)
+The venv lives at `backend/venv`. Activate in Git Bash with `source venv/Scripts/activate`.
+- `python manage.py runserver` — API + admin on :8000
+- `python manage.py migrate` / `makemigrations`
+- `python manage.py seed_knba` — seed starter content **and** an admin user (`admin@knba.org.np` / `knba-admin`, overridable via `KNBA_ADMIN_EMAIL` / `KNBA_ADMIN_PASSWORD`)
+- `python manage.py test` — run all tests; single test: `python manage.py test api.tests.ClassName.test_method`
+- `python manage.py createsuperuser` — note: creates a blank-email account, so log in by **username** (the admin login form prefills email)
+- `python manage.py collectstatic --noinput`
 
-There is no `requirements.txt` install shortcut documented beyond `pip install -r backend/requirements.txt`. The backend defaults to **SQLite** locally with no env file needed.
+The developer runs both dev servers themselves — don't auto-start `runserver` / `npm run dev` (port collisions). For changes that need a running server, hand them the command instead.
 
-## How the two halves connect
+## Architecture
 
-- The frontend reads the API base from `NEXT_PUBLIC_API_BASE_URL` (default `http://127.0.0.1:8000/api`) and media base from `NEXT_PUBLIC_MEDIA_BASE_URL`. See [lib/api.ts](lib/api.ts). All `NEXT_PUBLIC_*` values are **inlined at build time** — changing them requires a rebuild, never just a restart.
-- `next.config.ts` whitelists image hosts (`127.0.0.1:8000`, `localhost:8000`, and `NEXT_PUBLIC_MEDIA_HOST` in prod). A new media host must be added here or `next/image` will reject it.
-- Backend CORS/CSRF origins come from `DJANGO_CORS_ALLOWED_ORIGINS` / `DJANGO_CSRF_TRUSTED_ORIGINS` env vars, defaulting to the localhost:3000 frontend.
+### Frontend (`app/`, `components/`, `lib/`)
+- Route groups: `app/(site)/` = public pages, `app/(admin)/` = admin panel + `/login`. Every page is a **client component** (`"use client"`) that fetches from the API at runtime — there is no server-side data fetching or SSR data.
+- `lib/api.ts` is the single networking module: `API_BASE_URL`/`MEDIA_BASE_URL` resolution, `apiRequest()`, and the JWT session helpers. Pages mostly call `fetch(`${API_BASE_URL}...`)` directly.
+- Each `lib/<resource>.ts` holds that resource's TS types plus `normalize*` / `map*` transforms. `lib/site-data.ts` holds large **static fallback** content rendered when the API is unreachable.
+- `components/admin-*.tsx` are the admin CRUD managers (one per resource); other `components/*.tsx` are public UI. `components/admin-shell.tsx` is the admin chrome wrapper.
+- **Phone numbers** (business showcase, etc.) are stored as a **single comma-separated string** (e.g. `"+977-9801234567, 014445555"`) — mobiles carry the `+977` country code, landlines keep their area code. `lib/phone.ts` parses/formats this; `components/phone-numbers-input.tsx` is the multi-entry editor. Validation is intentionally lenient (no fixed digit count).
 
-## Auth model
+### Backend (`backend/api/` — a single Django app)
+- All content models extend `TimeStampedModel` in `api/models.py`. Most are exposed as DRF `ModelViewSet`s registered on a `DefaultRouter` in `api/urls.py`.
+- **`PublicReadAdminWriteViewSet`** is the key base class: safe methods → `AllowAny` and anonymous reads are filtered to `is_active=True`; writes require JWT auth. Subclass this for any publicly-readable, admin-editable resource.
+- Non-router endpoints: `health/`, `auth/login|refresh|me`, `about-page/` (aggregated read), `site-settings/` (singleton), `dashboard/summary/`.
+- **"Active singleton" pattern** (OrganizationProfile, EmergencyNotice, CommitteeTerm): saving one with `is_active`/`is_current` true deactivates all others. Implemented in `perform_create`/`perform_update` plus `current` and `activate` `@action`s. Preserve this when touching those viewsets.
+- **Image optimization**: every model with an `ImageField` calls `optimize_uploaded_image()` in `save()` (EXIF-transpose, resize to ≤2200px, re-encode/compress). Uploads land in `backend/media/`. Exception: `HeroSlide.image_url` is a plain `CharField` (URL/path), so those images bypass optimization.
+- **Two homepage "hero" models**: `HeroSlide` = rich content slides (title/description/CTA + `image_url`); `HomeHeroImage` = uploaded background images for the hero slider. Both surface under the admin `home` area (`admin-home-manager` / `admin-home-hero-manager`) — keep them distinct when editing.
+- **Submission → publish workflow**: `BusinessShowcaseSubmission` is publicly creatable; admin `approve`/`reject` actions promote it into a `BusinessShowcaseItem`. Similarly `ContactSubmission` → admin `reply` action sends email and records a `ContactReply`.
 
-JWT, not sessions, for the API. Flow lives in [lib/api.ts](lib/api.ts):
-- Login (`POST /api/auth/login/`) returns `{ access, refresh, user }`, stored in `localStorage` under `knba_admin_session`.
-- `apiRequest()` is the single fetch wrapper; pass `token` to send `Authorization: Bearer`.
-- `getValidAdminAccessToken()` refreshes via `/api/auth/refresh/` and re-stores the session; on failure it clears the session.
-- [components/admin-shell.tsx](components/admin-shell.tsx) is the admin gate: it hydrates the session client-side, redirects to `/login` if absent, and polls `/auth/me/` + submission/message endpoints every 30s for the topbar notification badge.
+### Auth flow
+JWT via `djangorestframework-simplejwt`. `LoginView` accepts **username or email**. The frontend stores `{access, refresh, user}` in `localStorage` under `knba_admin_session`; `getValidAdminAccessToken()` refreshes the access token before admin writes. Public reads need no token.
 
-## Backend API conventions
+## Configuration & deployment gotchas
 
-All endpoints are in [backend/api/views.py](backend/api/views.py); routes registered in [backend/api/urls.py](backend/api/urls.py) via DRF `DefaultRouter`.
-
-- **`PublicReadAdminWriteViewSet`** is the core base class. Anonymous users get read-only access **filtered to `is_active=True`**; authenticated users see everything and can write. When adding a public-facing resource, subclass this rather than `ModelViewSet`.
-- The global DRF default permission is `AllowAny` — security comes from the per-viewset `get_permissions()` overrides, not from a restrictive default. Be deliberate: a plain `ModelViewSet` is fully public unless you set `permission_classes`.
-- **"Singleton-ish" resources** (`OrganizationProfile`, `EmergencyNotice`, `CommitteeTerm`) enforce one active/current row: saving one with the active flag deactivates the others (`_sync_active_*` / `_sync_current_term`), and each exposes a `current` action and an `activate` detail action.
-- **Public submission → admin approval** is a recurring pattern (`BusinessShowcaseSubmission`, `MemberSubmission`): anonymous `create` is allowed, everything else requires auth. An `approve` action creates/updates the corresponding published record (`BusinessShowcaseItem` / `MemberProfile`) and stamps the submission; `reject` just marks status. Approved/published submissions cannot be rejected.
-- Image-bearing viewsets add `MultiPartParser, FormParser, JSONParser` so the same endpoint accepts both JSON and multipart uploads.
-
-## Member role capacity rule (cross-language invariant)
-
-Committee member roles have hard caps per current term. The cap table exists **twice and must stay in sync**:
-- Backend: [backend/api/member_role_caps.py](backend/api/member_role_caps.py) (`MEMBER_ROLE_CAPS`) — enforced on submission create and approve.
-- Frontend: [lib/member-roles.ts](lib/member-roles.ts).
-
-If you change a role cap, update both files.
-
-## Frontend data layer
-
-- The `app/` directory uses route groups: `(site)` = public pages, `(admin)` = admin panel (wrapped by `AdminShell`). The `(admin)` group has no shared URL prefix beyond the page paths themselves (`/admin/...`, `/login`).
-- Each `lib/*.ts` module owns a domain (gallery, members, services, business-showcase, organization-profile, …) and typically exports: a TypeScript record type, a `normalize*Record()` mapper from the loose API shape, an image-src resolver, and **fallback data** imported from [lib/site-data.ts](lib/site-data.ts). Pages render fallbacks when the API is unreachable or empty, so the public site never blanks out.
-- Image URL resolution is centralized: `resolveBackendAssetUrl` in [lib/api.ts](lib/api.ts) and per-domain `resolve*ImageSrc` helpers prepend `MEDIA_BASE_URL` to relative paths while leaving absolute/`blob:`/`data:` URLs untouched.
-- `@/*` path alias maps to the repo root (see `tsconfig.json`).
-
-## Database & deployment notes
-
-- DB engine is selected by `DJANGO_DB_ENGINE` (`sqlite` default, or `mysql` / `postgres`). For MySQL, [backend/config/__init__.py](backend/config/__init__.py) installs a **PyMySQL shim** (`install_as_MySQLdb`) so no `mysqlclient` C build is needed on shared hosting — do not remove it.
-- Production target is **cPanel/Passenger** (LiteSpeed). The frontend production entrypoint is [server.js](server.js) (hardcoded `dev = false`); the backend uses a `passenger_wsgi.py` created on the server. Full runbook is in [DEPLOY.md](DEPLOY.md) — read it before touching deploy config.
-- WhiteNoise serves Django static files; `collectstatic` is required for `/dj-admin/` styling. Media is served by Django's `serve()` view in [backend/config/urls.py](backend/config/urls.py) (in production an Apache alias is the recommended override — see DEPLOY.md).
+- **`NEXT_PUBLIC_*` are inlined at build time**, not read at runtime. Changing `NEXT_PUBLIC_API_BASE_URL` / `NEXT_PUBLIC_MEDIA_BASE_URL` / `NEXT_PUBLIC_MEDIA_HOST` requires a rebuild. Defaults point at `http://127.0.0.1:8000`.
+- **DB engine is env-switched** via `DJANGO_DB_ENGINE` in `backend/.env`: `sqlite` (default), `postgres`, or `mysql`. Local dev = **postgres** (Python 3.14 venv); production cPanel = **mysql**. Both drivers ship in `requirements.txt`.
+- **Don't remove the PyMySQL shim** in `backend/config/__init__.py` — it registers PyMySQL as MySQLdb so MySQL works wheel-only on shared hosting (only loads when engine is mysql).
+- `backend/config/settings.py` has a **custom `.env` loader** (no python-dotenv). `backend/.env` is gitignored and holds secrets + DB creds.
+- Media is served by Django (`config/urls.py` via `django.views.static.serve`) in production too — `next.config.ts` whitelists the media host for `next/image`.
+- Deployment is cPanel with two Passenger apps (Node + Python); `.cpanel.yml` runs migrate/collectstatic/build on git deploy. Full steps in `DEPLOY.md`.

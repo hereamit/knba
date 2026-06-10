@@ -10,6 +10,7 @@ import {
   normalizeBusinessShowcaseRecord,
   type BusinessShowcaseRecord,
 } from "@/lib/business-showcase";
+import { phoneTelHref, splitPhoneNumbers } from "@/lib/phone";
 import type { BusinessShowcaseItem } from "@/lib/site-data";
 
 function openBusinessUrl(url?: string) {
@@ -99,12 +100,14 @@ function BusinessCard({
         <div className="mt-5 space-y-2 text-sm leading-7 text-muted">
           <p>
             <span className="font-semibold text-primary">Phone:</span>{" "}
-            <a
-              href={`tel:${business.phone}`}
-              onClick={(event) => event.stopPropagation()}
-            >
-              {business.phone}
-            </a>
+            {splitPhoneNumbers(business.phone).map((number, index) => (
+              <span key={`${number}-${index}`}>
+                {index > 0 ? ", " : ""}
+                <a href={phoneTelHref(number)} onClick={(event) => event.stopPropagation()}>
+                  {number}
+                </a>
+              </span>
+            ))}
           </p>
           <p>
             <span className="font-semibold text-primary">Address:</span>{" "}
@@ -256,7 +259,7 @@ export default function BusinessShowcasePage() {
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary-soft">
-                Sponsors
+                Featured Sponsors
               </p>
               <h2 className="display-font mt-3 text-[2rem] font-semibold leading-tight text-primary md:text-[2.35rem]">
                 Featured Sponsors
@@ -307,7 +310,7 @@ export default function BusinessShowcasePage() {
       <section className="pb-20">
         <div className="rounded-[1.9rem] border border-line bg-[linear-gradient(135deg,#edf3ff,#ffffff)] px-6 py-7 shadow-[0_18px_40px_rgba(18,31,69,0.08)] md:px-8">
           <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary-soft">
-            Directory
+            Business Showcase
           </p>
           <h2 className="display-font mt-3 text-[2rem] font-semibold leading-tight text-primary md:text-[2.35rem]">
             Business Showcase

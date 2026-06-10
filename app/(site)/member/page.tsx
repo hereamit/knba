@@ -133,17 +133,8 @@ export default function MemberPage() {
     };
 
     void loadMembers();
-    const pollHandle = window.setInterval(() => {
-      void loadMembers();
-    }, 45000);
-    const onFocus = () => {
-      void loadMembers();
-    };
-    window.addEventListener("focus", onFocus);
     return () => {
       isCancelled = true;
-      window.clearInterval(pollHandle);
-      window.removeEventListener("focus", onFocus);
     };
   }, []);
 

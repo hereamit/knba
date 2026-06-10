@@ -103,18 +103,6 @@ class SiteSettings(TimeStampedModel):
         )
     )
     emergency_contact = models.CharField(max_length=50, default="+977-1-5350000")
-    about_eyebrow = models.CharField(max_length=80, default="About Us")
-    about_title = models.CharField(
-        max_length=255,
-        default="Who we are and what KNBA stands for.",
-    )
-    about_quote = models.TextField(
-        default=(
-            "Together, the merchants of Khichapokhari and New Road can shape a "
-            "market that's organized, fair, and worthy of its history."
-        )
-    )
-    about_quote_label = models.CharField(max_length=80, default="Founding Vision")
     history_text = models.TextField(blank=True)
     founder_name = models.CharField(max_length=120, blank=True)
     founder_title = models.CharField(max_length=120, blank=True)
@@ -128,7 +116,44 @@ class SiteSettings(TimeStampedModel):
     vision_text = models.TextField(blank=True)
     map_embed_url = models.TextField(blank=True)
     social_links = models.JSONField(default=list, blank=True)
-    member_submissions_open = models.BooleanField(default=False)
+    calendar_pdf = models.FileField(upload_to="about/calendar/", blank=True, null=True)
+
+    # Editable home-page section headings (defaults match the original hardcoded copy).
+    home_about_eyebrow = models.CharField(max_length=120, default="About KNBA")
+    home_about_title = models.CharField(
+        max_length=255,
+        default="KNBA builds a unified business voice for Khichapokhari and New Road.",
+    )
+    home_services_eyebrow = models.CharField(max_length=120, default="Core Services")
+    home_services_title = models.CharField(
+        max_length=255,
+        default="Practical support that makes day-to-day business easier.",
+    )
+    home_services_description = models.TextField(
+        default="These service cards now come from the live KNBA service records managed in the portal.",
+    )
+    home_business_eyebrow = models.CharField(max_length=120, default="Business Showcase")
+    home_business_title = models.CharField(
+        max_length=255,
+        default="Promoted businesses that help support KNBA operations.",
+    )
+    home_business_description = models.TextField(
+        default=(
+            "This sponsored directory gives member businesses a stronger public presence "
+            "while creating a practical fundraising stream for the association."
+        ),
+    )
+    home_gallery_eyebrow = models.CharField(max_length=120, default="Gallery")
+    home_gallery_title = models.CharField(
+        max_length=255,
+        default="Moments from events, market coordination, and member programs.",
+    )
+    home_gallery_description = models.TextField(
+        default=(
+            "A snapshot of KNBA activities across meetings, celebrations, training sessions, "
+            "and collaboration on New Road."
+        ),
+    )
 
     class Meta:
         verbose_name_plural = "Site settings"
@@ -300,7 +325,6 @@ class GalleryItem(TimeStampedModel):
     image = models.ImageField(upload_to="gallery/images/", blank=True, null=True)
     image_url = models.CharField(max_length=255, blank=True)
     is_featured = models.BooleanField(default=False)
-    show_in_slider = models.BooleanField(default=False)
     display_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -315,11 +339,29 @@ class GalleryItem(TimeStampedModel):
         super().save(*args, **kwargs)
 
 
+class HomeHeroImage(TimeStampedModel):
+    title = models.CharField(max_length=160, blank=True)
+    image = models.ImageField(upload_to="home-hero/images/", blank=True, null=True)
+    image_url = models.CharField(max_length=255, blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("display_order", "id")
+
+    def __str__(self) -> str:
+        return self.title or f"Hero image {self.pk}"
+
+    def save(self, *args, **kwargs):
+        optimize_uploaded_image(self.image)
+        super().save(*args, **kwargs)
+
+
 class BusinessShowcaseItem(TimeStampedModel):
     name = models.CharField(max_length=180)
     category = models.CharField(max_length=120)
     description = models.TextField(blank=True)
-    phone = models.CharField(max_length=50)
+    phone = models.CharField(max_length=150)
     address = models.CharField(max_length=255)
     image = models.ImageField(upload_to="business-showcase/images/", blank=True, null=True)
     image_url = models.CharField(max_length=255, blank=True)
@@ -354,7 +396,7 @@ class BusinessShowcaseSubmission(TimeStampedModel):
     name = models.CharField(max_length=180)
     category = models.CharField(max_length=120)
     description = models.TextField(blank=True)
-    phone = models.CharField(max_length=50)
+    phone = models.CharField(max_length=150)
     address = models.CharField(max_length=255)
     image = models.ImageField(upload_to="business-showcase/submissions/", blank=True, null=True)
     image_url = models.CharField(max_length=255, blank=True)
@@ -389,53 +431,6 @@ class BusinessShowcaseSubmission(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         optimize_uploaded_image(self.image)
-        super().save(*args, **kwargs)
-
-
-class MemberSubmission(TimeStampedModel):
-    class ReviewStatus(models.TextChoices):
-        PENDING = "pending", "Pending"
-        APPROVED = "approved", "Approved"
-        REJECTED = "rejected", "Rejected"
-
-    submitter_name = models.CharField(max_length=120)
-    submitter_email = models.EmailField()
-    submitter_phone = models.CharField(max_length=50, blank=True)
-    name = models.CharField(max_length=120)
-    role = models.CharField(max_length=120)
-    category = models.CharField(
-        max_length=32,
-        choices=MemberProfile.Category.choices,
-        default=MemberProfile.Category.EXECUTIVE,
-    )
-    phone = models.CharField(max_length=50)
-    email = models.EmailField()
-    note = models.CharField(max_length=255, blank=True)
-    photo = models.ImageField(upload_to="members/submissions/", blank=True, null=True)
-    is_read = models.BooleanField(default=False)
-    review_status = models.CharField(
-        max_length=20,
-        choices=ReviewStatus.choices,
-        default=ReviewStatus.PENDING,
-    )
-    admin_notes = models.TextField(blank=True)
-    reviewed_at = models.DateTimeField(blank=True, null=True)
-    published_member = models.ForeignKey(
-        MemberProfile,
-        on_delete=models.SET_NULL,
-        related_name="source_submissions",
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        ordering = ("-created_at", "id")
-
-    def __str__(self) -> str:
-        return f"{self.name} ({self.get_review_status_display()})"
-
-    def save(self, *args, **kwargs):
-        optimize_uploaded_image(self.photo)
         super().save(*args, **kwargs)
 
 

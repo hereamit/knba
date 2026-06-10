@@ -15,7 +15,6 @@ export function AdminLoginForm() {
   const [error, setError] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="w-full max-w-md">
@@ -42,6 +41,10 @@ export function AdminLoginForm() {
           <p className="text-sm font-medium text-slate-600">{profile.organization_name}</p>
         </div>
       </div>
+      <h1 className="text-3xl font-bold text-primary">
+        Sign in to the {profile.short_name} admin dashboard.
+      </h1>
+
       <form
         className="mt-6 space-y-5"
         onKeyDown={moveToNextFormField}
@@ -73,69 +76,34 @@ export function AdminLoginForm() {
           }
         }}
       >
-        <input
-          type="text"
-          required
-          autoComplete="username"
-          placeholder="Email or username"
-          value={login}
-          onChange={(event) => setLogin(event.target.value)}
-          className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
-        />
-        <div className="relative">
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-primary">
+            Email or Username
+          </span>
           <input
-            type={showPassword ? "text" : "password"}
+            type="text"
+            required
+            autoComplete="username"
+            placeholder="Enter your username or email"
+            value={login}
+            onChange={(event) => setLogin(event.target.value)}
+            className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-primary">
+            Password
+          </span>
+          <input
+            type="password"
             required
             autoComplete="current-password"
-            placeholder="Password"
+            placeholder="Enter your password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 pr-12 outline-none transition focus:border-primary"
+            className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword((current) => !current)}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            aria-pressed={showPassword}
-            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-500 transition hover:text-primary"
-          >
-            {showPassword ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.79 19.79 0 0 1 5.06-6.06" />
-                <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a19.86 19.86 0 0 1-3.17 4.19" />
-                <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            )}
-          </button>
-        </div>
+        </label>
         {error ? (
           <div className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
             {error}

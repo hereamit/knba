@@ -16,7 +16,6 @@ import {
   type MemberRecord,
   type MemberTermRecord,
 } from "@/lib/members";
-import { findMemberRole, memberRoleOptions } from "@/lib/member-roles";
 
 type MemberTermFormState = {
   label: string;
@@ -314,15 +313,8 @@ export function AdminMemberManager({
     };
 
     void run();
-    const onFocus = () => {
-      if (selectedTermId) {
-        void loadMembers(selectedTermId);
-      }
-    };
-    window.addEventListener("focus", onFocus);
     return () => {
       isCancelled = true;
-      window.removeEventListener("focus", onFocus);
     };
   }, [selectedTermId, loadMembers]);
 
@@ -855,35 +847,15 @@ export function AdminMemberManager({
                 throw new Error("Enter exactly 10 digits after +977.");
               }
 
-              const roleMeta = findMemberRole(form.role);
-              let effectiveDisplayOrder = form.display_order || "0";
-              if (roleMeta?.display_order != null) {
-                effectiveDisplayOrder = String(roleMeta.display_order);
-              } else if (
-                roleMeta?.display_order === null &&
-                (!form.display_order || Number(form.display_order) <= 0)
-              ) {
-                const maxInCategory = items
-                  .filter((item) => item.category === (roleMeta?.category ?? form.category))
-                  .reduce(
-                    (acc, item) => (item.display_order > acc ? item.display_order : acc),
-                    0,
-                  );
-                effectiveDisplayOrder = String(maxInCategory + 1);
-              }
-
               const payload = new FormData();
               payload.append("term", form.term);
               payload.append("name", form.name);
-              payload.append(
-                "category",
-                roleMeta ? roleMeta.category : form.category,
-              );
+              payload.append("category", form.category);
               payload.append("role", form.role);
               payload.append("phone", `${NEPAL_COUNTRY_CODE}-${form.phone}`);
               payload.append("email", form.email);
               payload.append("note", form.note);
-              payload.append("display_order", effectiveDisplayOrder);
+              payload.append("display_order", form.display_order || "0");
               payload.append("is_active", String(form.is_active));
 
               if (photoFile) {
@@ -955,31 +927,21 @@ export function AdminMemberManager({
                 </div>
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
-                <span>Role</span>
+                <span>Section</span>
                 <div className="relative">
                   <select
-                    value={form.role}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      const meta = findMemberRole(value);
-                      setForm((current) => ({
-                        ...current,
-                        role: value,
-                        category: meta ? meta.category : current.category,
-                      }));
-                    }}
+                    value={form.category}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, category: event.target.value }))
+                    }
                     className="admin-master-input appearance-none pr-14"
                     required
                   >
-                    <option value="">Select role</option>
-                    {memberRoleOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
+                    {categoryOptions.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
                       </option>
                     ))}
-                    {form.role && !findMemberRole(form.role) ? (
-                      <option value={form.role}>{form.role} (custom)</option>
-                    ) : null}
                   </select>
                   <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
                 </div>
@@ -997,23 +959,34 @@ export function AdminMemberManager({
                 />
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
-                <span>Section (auto from role)</span>
-                <div className="relative">
-                  <select
-                    value={form.category}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, category: event.target.value }))
-                    }
-                    className="admin-master-input appearance-none pr-14"
-                    required
+                <span>Role</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <select
+                      value={form.role}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, role: event.target.value }))
+                      }
+                      className="admin-master-input appearance-none pr-14"
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      {roleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addRoleOption}
+                    className="admin-master-btn admin-master-btn-primary min-h-[1.8rem] w-[1.8rem] shrink-0 px-0 py-0 text-[0.82rem] font-medium"
+                    aria-label="Add role"
                   >
-                    {categoryOptions.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+                    +
+                  </button>
                 </div>
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
@@ -1061,7 +1034,7 @@ export function AdminMemberManager({
                 />
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
-                <span>Display Order (auto if blank)</span>
+                <span>Display Order</span>
                 <input
                   type="number"
                   min="0"
@@ -1070,7 +1043,7 @@ export function AdminMemberManager({
                     setForm((current) => ({ ...current, display_order: event.target.value }))
                   }
                   className="admin-master-input"
-                  placeholder="Leave blank to use role's default"
+                  required
                 />
               </label>
               <label className="admin-master-label w-full max-w-[25rem] md:col-span-2">
