@@ -20,6 +20,7 @@ from .models import (
     GeneralMember,
     GalleryItem,
     HeroSlide,
+    HomeHeroImage,
     MemberProfile,
     OrganizationProfile,
     ServiceItem,
@@ -39,6 +40,7 @@ from .serializers import (
     GeneralMemberSerializer,
     GalleryItemSerializer,
     HeroSlideSerializer,
+    HomeHeroImageSerializer,
     LoginSerializer,
     MemberProfileSerializer,
     ServiceItemSerializer,
@@ -295,6 +297,12 @@ class EmergencyNoticeViewSet(PublicReadAdminWriteViewSet):
 class HeroSlideViewSet(PublicReadAdminWriteViewSet):
     queryset = HeroSlide.objects.all()
     serializer_class = HeroSlideSerializer
+
+
+class HomeHeroImageViewSet(PublicReadAdminWriteViewSet):
+    queryset = HomeHeroImage.objects.all()
+    serializer_class = HomeHeroImageSerializer
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
 
 class ServiceItemViewSet(PublicReadAdminWriteViewSet):

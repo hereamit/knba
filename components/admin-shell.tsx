@@ -385,7 +385,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       color: "var(--admin-header-text)",
                     }}
                   >
-                    profile.short_name.slice(0, 1)
+                    {profile.short_name.slice(0, 1)}
                   </div>
                 )}
                 {!sidebarCollapsed ? (

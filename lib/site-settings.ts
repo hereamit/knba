@@ -18,6 +18,17 @@ export type SiteSettingsRecord = {
   mission_text: string;
   vision_text: string;
   map_embed_url: string;
+  home_about_eyebrow: string;
+  home_about_title: string;
+  home_services_eyebrow: string;
+  home_services_title: string;
+  home_services_description: string;
+  home_business_eyebrow: string;
+  home_business_title: string;
+  home_business_description: string;
+  home_gallery_eyebrow: string;
+  home_gallery_title: string;
+  home_gallery_description: string;
 };
 
 export const defaultSiteSettings: SiteSettingsRecord = {
@@ -42,7 +53,27 @@ export const defaultSiteSettings: SiteSettingsRecord = {
     "Create a well-managed, trusted, and future-ready business district in Khichapokhari and New Road.",
   map_embed_url:
     "https://www.google.com/maps?q=Khichapokhari%20New%20Road%20Kathmandu&output=embed",
+  home_about_eyebrow: "About KNBA",
+  home_about_title:
+    "KNBA builds a unified business voice for Khichapokhari and New Road.",
+  home_services_eyebrow: "Core Services",
+  home_services_title: "Practical support that makes day-to-day business easier.",
+  home_services_description:
+    "These service cards now come from the live KNBA service records managed in the portal.",
+  home_business_eyebrow: "Business Showcase",
+  home_business_title: "Promoted businesses that help support KNBA operations.",
+  home_business_description:
+    "This sponsored directory gives member businesses a stronger public presence while creating a practical fundraising stream for the association.",
+  home_gallery_eyebrow: "Gallery",
+  home_gallery_title:
+    "Moments from events, market coordination, and member programs.",
+  home_gallery_description:
+    "A snapshot of KNBA activities across meetings, celebrations, training sessions, and collaboration on New Road.",
 };
+
+function pickSettingText(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
 
 export function normalizeSiteSettingsRecord(
   record: Partial<SiteSettingsRecord>,
@@ -122,5 +153,49 @@ export function normalizeSiteSettingsRecord(
       typeof record.map_embed_url === "string" && record.map_embed_url.trim()
         ? record.map_embed_url
         : defaultSiteSettings.map_embed_url,
+    home_about_eyebrow: pickSettingText(
+      record.home_about_eyebrow,
+      defaultSiteSettings.home_about_eyebrow,
+    ),
+    home_about_title: pickSettingText(
+      record.home_about_title,
+      defaultSiteSettings.home_about_title,
+    ),
+    home_services_eyebrow: pickSettingText(
+      record.home_services_eyebrow,
+      defaultSiteSettings.home_services_eyebrow,
+    ),
+    home_services_title: pickSettingText(
+      record.home_services_title,
+      defaultSiteSettings.home_services_title,
+    ),
+    home_services_description: pickSettingText(
+      record.home_services_description,
+      defaultSiteSettings.home_services_description,
+    ),
+    home_business_eyebrow: pickSettingText(
+      record.home_business_eyebrow,
+      defaultSiteSettings.home_business_eyebrow,
+    ),
+    home_business_title: pickSettingText(
+      record.home_business_title,
+      defaultSiteSettings.home_business_title,
+    ),
+    home_business_description: pickSettingText(
+      record.home_business_description,
+      defaultSiteSettings.home_business_description,
+    ),
+    home_gallery_eyebrow: pickSettingText(
+      record.home_gallery_eyebrow,
+      defaultSiteSettings.home_gallery_eyebrow,
+    ),
+    home_gallery_title: pickSettingText(
+      record.home_gallery_title,
+      defaultSiteSettings.home_gallery_title,
+    ),
+    home_gallery_description: pickSettingText(
+      record.home_gallery_description,
+      defaultSiteSettings.home_gallery_description,
+    ),
   };
 }

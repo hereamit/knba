@@ -656,6 +656,7 @@ export const advisoryMembers: MemberProfile[] = [
 
 export const adminNavItems = [
   { label: "Dashboard", href: "/admin", icon: "[]" },
+  { label: "Home Page", href: "/admin/home", icon: "H" },
   { label: "About", href: "/admin/about", icon: "A" },
   { label: "Members", href: "/admin/members", icon: "()" },
   { label: "Events", href: "/admin/events", icon: "o" },

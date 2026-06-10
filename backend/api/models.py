@@ -117,6 +117,43 @@ class SiteSettings(TimeStampedModel):
     map_embed_url = models.TextField(blank=True)
     social_links = models.JSONField(default=list, blank=True)
 
+    # Editable home-page section headings (defaults match the original hardcoded copy).
+    home_about_eyebrow = models.CharField(max_length=120, default="About KNBA")
+    home_about_title = models.CharField(
+        max_length=255,
+        default="KNBA builds a unified business voice for Khichapokhari and New Road.",
+    )
+    home_services_eyebrow = models.CharField(max_length=120, default="Core Services")
+    home_services_title = models.CharField(
+        max_length=255,
+        default="Practical support that makes day-to-day business easier.",
+    )
+    home_services_description = models.TextField(
+        default="These service cards now come from the live KNBA service records managed in the portal.",
+    )
+    home_business_eyebrow = models.CharField(max_length=120, default="Business Showcase")
+    home_business_title = models.CharField(
+        max_length=255,
+        default="Promoted businesses that help support KNBA operations.",
+    )
+    home_business_description = models.TextField(
+        default=(
+            "This sponsored directory gives member businesses a stronger public presence "
+            "while creating a practical fundraising stream for the association."
+        ),
+    )
+    home_gallery_eyebrow = models.CharField(max_length=120, default="Gallery")
+    home_gallery_title = models.CharField(
+        max_length=255,
+        default="Moments from events, market coordination, and member programs.",
+    )
+    home_gallery_description = models.TextField(
+        default=(
+            "A snapshot of KNBA activities across meetings, celebrations, training sessions, "
+            "and collaboration on New Road."
+        ),
+    )
+
     class Meta:
         verbose_name_plural = "Site settings"
 
@@ -296,6 +333,24 @@ class GalleryItem(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    def save(self, *args, **kwargs):
+        optimize_uploaded_image(self.image)
+        super().save(*args, **kwargs)
+
+
+class HomeHeroImage(TimeStampedModel):
+    title = models.CharField(max_length=160, blank=True)
+    image = models.ImageField(upload_to="home-hero/images/", blank=True, null=True)
+    image_url = models.CharField(max_length=255, blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("display_order", "id")
+
+    def __str__(self) -> str:
+        return self.title or f"Hero image {self.pk}"
 
     def save(self, *args, **kwargs):
         optimize_uploaded_image(self.image)

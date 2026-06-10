@@ -13,8 +13,8 @@ export function AdminLoginForm() {
   const { profile } = useOrganizationProfile();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [login, setLogin] = useState("admin@knba.org.np");
-  const [password, setPassword] = useState("knba-admin");
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <div className="w-full max-w-md">
@@ -83,6 +83,8 @@ export function AdminLoginForm() {
           <input
             type="text"
             required
+            autoComplete="username"
+            placeholder="Enter your username or email"
             value={login}
             onChange={(event) => setLogin(event.target.value)}
             className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"
@@ -95,6 +97,8 @@ export function AdminLoginForm() {
           <input
             type="password"
             required
+            autoComplete="current-password"
+            placeholder="Enter your password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="w-full rounded-[1rem] border border-line bg-[#f7f9ff] px-4 py-3 outline-none transition focus:border-primary"

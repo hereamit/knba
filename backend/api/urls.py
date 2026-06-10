@@ -16,6 +16,7 @@ from .views import (
     GalleryItemViewSet,
     HealthCheckView,
     HeroSlideViewSet,
+    HomeHeroImageViewSet,
     LoginView,
     MemberProfileViewSet,
     OrganizationProfileViewSet,
@@ -28,6 +29,7 @@ router = DefaultRouter()
 router.register("organization-profiles", OrganizationProfileViewSet, basename="organization-profiles")
 router.register("emergency-notices", EmergencyNoticeViewSet, basename="emergency-notices")
 router.register("hero-slides", HeroSlideViewSet, basename="hero-slides")
+router.register("home-hero-images", HomeHeroImageViewSet, basename="home-hero-images")
 router.register("services", ServiceItemViewSet, basename="services")
 router.register("member-terms", CommitteeTermViewSet, basename="member-terms")
 router.register("members", MemberProfileViewSet, basename="members")

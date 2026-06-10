@@ -33,7 +33,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sourceSans.variable} ${merriweather.variable}`}>
+      <body
+        className={`${sourceSans.variable} ${merriweather.variable}`}
+        suppressHydrationWarning
+      >
         <OrganizationProfileProvider>
           <DynamicBrandAssets />
           {children}

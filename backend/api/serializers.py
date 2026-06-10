@@ -14,6 +14,7 @@ from .models import (
     GeneralMember,
     GalleryItem,
     HeroSlide,
+    HomeHeroImage,
     MemberProfile,
     OrganizationProfile,
     ServiceItem,
@@ -157,6 +158,33 @@ class HeroSlideSerializer(serializers.ModelSerializer):
     class Meta:
         model = HeroSlide
         fields = "__all__"
+
+
+class HomeHeroImageSerializer(serializers.ModelSerializer):
+    image_src = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HomeHeroImage
+        fields = (
+            "id",
+            "title",
+            "image",
+            "image_url",
+            "image_src",
+            "display_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def get_image_src(self, obj):
+        request = self.context.get("request")
+        if obj.image:
+            if request is not None:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return obj.image_url
 
 
 class ServiceItemSerializer(serializers.ModelSerializer):
