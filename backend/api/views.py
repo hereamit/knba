@@ -94,6 +94,8 @@ class CurrentUserView(APIView):
 
 
 class SiteSettingsView(APIView):
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
     def get_permissions(self):
         if self.request.method in SAFE_METHODS:
             return [AllowAny()]
@@ -106,19 +108,23 @@ class SiteSettingsView(APIView):
         return settings
 
     def get(self, request):
-        serializer = SiteSettingsSerializer(self.get_object())
+        serializer = SiteSettingsSerializer(self.get_object(), context={"request": request})
         return Response(serializer.data)
 
     def patch(self, request):
         instance = self.get_object()
-        serializer = SiteSettingsSerializer(instance, data=request.data, partial=True)
+        serializer = SiteSettingsSerializer(
+            instance, data=request.data, partial=True, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def put(self, request):
         instance = self.get_object()
-        serializer = SiteSettingsSerializer(instance, data=request.data)
+        serializer = SiteSettingsSerializer(
+            instance, data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -391,13 +397,10 @@ class GalleryItemViewSet(PublicReadAdminWriteViewSet):
         queryset = super().get_queryset()
         category = self.request.query_params.get("category")
         featured = self.request.query_params.get("featured")
-        slider = self.request.query_params.get("slider")
         if category:
             queryset = queryset.filter(category__iexact=category)
         if featured in {"1", "true", "True"}:
             queryset = queryset.filter(is_featured=True)
-        if slider in {"1", "true", "True"}:
-            queryset = queryset.filter(show_in_slider=True)
         return queryset
 
 

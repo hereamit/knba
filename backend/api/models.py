@@ -116,6 +116,7 @@ class SiteSettings(TimeStampedModel):
     vision_text = models.TextField(blank=True)
     map_embed_url = models.TextField(blank=True)
     social_links = models.JSONField(default=list, blank=True)
+    calendar_pdf = models.FileField(upload_to="about/calendar/", blank=True, null=True)
 
     # Editable home-page section headings (defaults match the original hardcoded copy).
     home_about_eyebrow = models.CharField(max_length=120, default="About KNBA")
@@ -324,7 +325,6 @@ class GalleryItem(TimeStampedModel):
     image = models.ImageField(upload_to="gallery/images/", blank=True, null=True)
     image_url = models.CharField(max_length=255, blank=True)
     is_featured = models.BooleanField(default=False)
-    show_in_slider = models.BooleanField(default=False)
     display_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 

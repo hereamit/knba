@@ -18,6 +18,7 @@ export type SiteSettingsRecord = {
   mission_text: string;
   vision_text: string;
   map_embed_url: string;
+  calendar_pdf_url: string;
   home_about_eyebrow: string;
   home_about_title: string;
   home_services_eyebrow: string;
@@ -53,6 +54,7 @@ export const defaultSiteSettings: SiteSettingsRecord = {
     "Create a well-managed, trusted, and future-ready business district in Khichapokhari and New Road.",
   map_embed_url:
     "https://www.google.com/maps?q=Khichapokhari%20New%20Road%20Kathmandu&output=embed",
+  calendar_pdf_url: "",
   home_about_eyebrow: "About KNBA",
   home_about_title:
     "KNBA builds a unified business voice for Khichapokhari and New Road.",
@@ -153,6 +155,10 @@ export function normalizeSiteSettingsRecord(
       typeof record.map_embed_url === "string" && record.map_embed_url.trim()
         ? record.map_embed_url
         : defaultSiteSettings.map_embed_url,
+    calendar_pdf_url:
+      typeof (record as { calendar_pdf_url?: string }).calendar_pdf_url === "string"
+        ? (record as { calendar_pdf_url: string }).calendar_pdf_url
+        : "",
     home_about_eyebrow: pickSettingText(
       record.home_about_eyebrow,
       defaultSiteSettings.home_about_eyebrow,

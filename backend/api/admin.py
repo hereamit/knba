@@ -83,11 +83,10 @@ class GalleryItemAdmin(admin.ModelAdmin):
         "title",
         "category",
         "is_featured",
-        "show_in_slider",
         "display_order",
         "is_active",
     )
-    list_filter = ("category", "is_featured", "show_in_slider", "is_active")
+    list_filter = ("category", "is_featured", "is_active")
     search_fields = ("title", "description")
 
 

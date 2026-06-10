@@ -78,7 +78,11 @@ export function AdminAboutManager() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [calendarFile, setCalendarFile] = useState<File | null>(null);
+  const [calendarUrl, setCalendarUrl] = useState("");
+  const [calendarMarkedForRemoval, setCalendarMarkedForRemoval] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const calendarInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadAboutContent = useCallback(async () => {
     const accessToken = await getValidAdminAccessToken();
@@ -105,6 +109,9 @@ export function AdminAboutManager() {
 
     setForm(getAboutFormState(settingsData));
     setSummary(summaryData);
+    setCalendarUrl(settingsData.calendar_pdf_url);
+    setCalendarFile(null);
+    setCalendarMarkedForRemoval(false);
   }, []);
 
   useEffect(() => {
@@ -209,19 +216,25 @@ export function AdminAboutManager() {
 
           try {
             const accessToken = await getValidAdminAccessToken();
+            const formData = new FormData();
+            formData.append("history_text", form.history_text.trim());
+            formData.append("founder_message", form.founder_message.trim());
+            formData.append("president_message", form.president_message.trim());
+            formData.append("mission_text", form.mission_text.trim());
+            formData.append("vision_text", form.vision_text.trim());
+            if (calendarFile) {
+              formData.append("calendar_pdf", calendarFile);
+            }
+            if (calendarMarkedForRemoval && !calendarFile) {
+              formData.append("calendar_pdf_clear", "1");
+            }
+
             const response = await fetch(`${API_BASE_URL}/site-settings/`, {
               method: "PATCH",
               headers: {
                 Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
               },
-              body: JSON.stringify({
-                history_text: form.history_text.trim(),
-                founder_message: form.founder_message.trim(),
-                president_message: form.president_message.trim(),
-                mission_text: form.mission_text.trim(),
-                vision_text: form.vision_text.trim(),
-              }),
+              body: formData,
             });
 
             const rawText = await response.text();
@@ -319,6 +332,71 @@ export function AdminAboutManager() {
                 rows={4}
                 required
               />
+            </label>
+
+            <label className="admin-master-label md:col-span-2">
+              <span>Association Calendar (PDF)</span>
+              <div className="flex flex-wrap items-center gap-3 rounded-[1rem] border border-dashed border-[rgba(39,60,117,0.18)] bg-white/80 px-3 py-3">
+                <input
+                  ref={calendarInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => {
+                    setCalendarFile(event.target.files?.[0] ?? null);
+                    setCalendarMarkedForRemoval(false);
+                  }}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => calendarInputRef.current?.click()}
+                  className="admin-master-btn admin-master-btn-secondary min-h-[1.9rem] px-3 py-1 text-[0.7rem] font-medium"
+                >
+                  {calendarFile || (calendarUrl && !calendarMarkedForRemoval)
+                    ? "Replace PDF"
+                    : "Upload PDF"}
+                </button>
+
+                {calendarFile ? (
+                  <span className="text-sm font-medium text-slate-700">
+                    {calendarFile.name} (new)
+                  </span>
+                ) : calendarMarkedForRemoval ? (
+                  <span className="text-sm font-medium text-rose-600">
+                    Will be removed when you save.
+                  </span>
+                ) : calendarUrl ? (
+                  <a
+                    href={calendarUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-primary underline"
+                  >
+                    View current calendar
+                  </a>
+                ) : (
+                  <span className="text-sm text-slate-500">No calendar uploaded yet.</span>
+                )}
+
+                {calendarFile || (calendarUrl && !calendarMarkedForRemoval) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCalendarFile(null);
+                      setCalendarMarkedForRemoval(true);
+                      if (calendarInputRef.current) {
+                        calendarInputRef.current.value = "";
+                      }
+                    }}
+                    className="text-sm font-medium text-rose-600 underline"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+              <span className="mt-1 text-[0.62rem] font-medium text-slate-500">
+                Shown on the public About page with a download button. PDF only.
+              </span>
             </label>
           </div>
 

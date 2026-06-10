@@ -68,9 +68,28 @@ class LoginSerializer(TokenObtainPairSerializer):
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
+    calendar_pdf_url = serializers.SerializerMethodField()
+
     class Meta:
         model = SiteSettings
         fields = "__all__"
+
+    def get_calendar_pdf_url(self, obj):
+        request = self.context.get("request")
+        if obj.calendar_pdf:
+            if request is not None:
+                return request.build_absolute_uri(obj.calendar_pdf.url)
+            return obj.calendar_pdf.url
+        return ""
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if request is not None and request.data.get("calendar_pdf_clear") in {"1", "true", "True"}:
+            if instance.calendar_pdf:
+                instance.calendar_pdf.delete(save=False)
+            instance.calendar_pdf = None
+
+        return super().update(instance, validated_data)
 
 
 class OrganizationProfileSerializer(serializers.ModelSerializer):
@@ -320,7 +339,6 @@ class GalleryItemSerializer(serializers.ModelSerializer):
             "image_url",
             "image_src",
             "is_featured",
-            "show_in_slider",
             "display_order",
             "is_active",
             "created_at",

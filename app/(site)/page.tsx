@@ -19,7 +19,6 @@ import {
 import {
   fallbackGalleryRecords,
   getFallbackSliderSlides,
-  mapGalleryRecordsToSlider,
   normalizeGalleryRecord,
   resolveGalleryImageSrc,
   type GalleryRecord,
@@ -191,9 +190,6 @@ export default function HomePage() {
   );
 
   const heroImageSlides = mapHomeHeroImagesToSlider(heroImages);
-  const sliderSlides = heroImageSlides.length
-    ? heroImageSlides
-    : mapGalleryRecordsToSlider(galleryRecords);
   const galleryPreviewItems = galleryRecords.filter((item) => item.is_featured);
   const previewGrid = (galleryPreviewItems.length ? galleryPreviewItems : galleryRecords).slice(0, 4);
   const highlightImage = galleryPreviewItems[0] ?? galleryRecords[0] ?? fallbackGalleryRecords[0];
@@ -204,11 +200,11 @@ export default function HomePage() {
     <div className="pb-20">
       <section className="section-wrap pt-6 md:pt-10">
         <HomeHeroSlider
-          slides={sliderSlides.length ? sliderSlides : getFallbackSliderSlides()}
+          slides={heroImageSlides.length ? heroImageSlides : getFallbackSliderSlides()}
         />
       </section>
 
-      <section className="section-wrap relative z-10 mt-4 md:-mt-2">
+      <section className="section-wrap mt-6 md:mt-8">
         <div className="grid gap-4 md:grid-cols-4">
           {statCards.map((stat) => (
             <article key={stat.label} className="panel rounded-[1.5rem] p-6">

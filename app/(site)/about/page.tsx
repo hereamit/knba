@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { CalendarFlipbook } from "@/components/calendar-flipbook";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { SectionHeading } from "@/components/section-heading";
 import { API_BASE_URL } from "@/lib/api";
@@ -311,6 +312,45 @@ export default function AboutPage() {
           </article>
         </div>
       </section>
+
+      {about.settings.calendar_pdf_url ? (
+        <section className="pb-20">
+          <SectionHeading
+            eyebrow="Association Calendar"
+            title="Flip through the official KNBA calendar."
+            description="Turn the pages like a real diary — use the arrows or simply swipe on touch screens. You can also download the full PDF."
+          />
+          <div className="mt-10 rounded-[1.9rem] bg-[linear-gradient(135deg,#eef3ff,#ffffff)] p-5 md:p-8">
+            <CalendarFlipbook pdfUrl={about.settings.calendar_pdf_url} />
+          </div>
+          <div className="mt-8 flex justify-center">
+            <a
+              href={about.settings.calendar_pdf_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(30,55,153,0.22)] transition hover:bg-primary-soft"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download Calendar (PDF)
+            </a>
+          </div>
+        </section>
+      ) : null}
 
       <section className="pb-20">
         <SectionHeading

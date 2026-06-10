@@ -20,7 +20,6 @@ type GalleryFormState = {
   description: string;
   display_order: string;
   is_featured: boolean;
-  show_in_slider: boolean;
   is_active: boolean;
 };
 
@@ -30,7 +29,6 @@ const emptyForm: GalleryFormState = {
   description: "",
   display_order: "1",
   is_featured: false,
-  show_in_slider: false,
   is_active: true,
 };
 
@@ -83,6 +81,54 @@ function getApiErrorMessage(data: unknown, fallback: string) {
   return fallback;
 }
 
+async function createGalleryItem(fields: {
+  title: string;
+  category: string;
+  description: string;
+  display_order: string;
+  is_featured: boolean;
+  is_active: boolean;
+  image?: File | null;
+}) {
+  const payload = new FormData();
+  payload.append("title", fields.title);
+  payload.append("category", fields.category);
+  payload.append("description", fields.description);
+  payload.append("display_order", fields.display_order || "0");
+  payload.append("is_featured", String(fields.is_featured));
+  payload.append("is_active", String(fields.is_active));
+  if (fields.image) {
+    payload.append("image", fields.image);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/gallery/`, {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: payload,
+  });
+
+  const rawText = await response.text();
+  const data = parseApiPayload(rawText);
+  if (!response.ok) {
+    if (typeof data === "string" && data.trim()) {
+      throw new Error(data.length > 220 ? `${data.slice(0, 220).trim()}...` : data);
+    }
+    throw new Error(
+      getApiErrorMessage(data, `Unable to save gallery item. (${response.status})`),
+    );
+  }
+
+  return data;
+}
+
+function deriveTitleFromFile(file: File, category: string, index: number) {
+  const base = file.name
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[-_]+/g, " ")
+    .trim();
+  return toTitleCase(base) || `${category || "Gallery"} ${index + 1}`;
+}
+
 export function AdminGalleryManager() {
   const [items, setItems] = useState<GalleryRecord[]>([]);
   const [orderDrafts, setOrderDrafts] = useState<Record<string, string>>({});
@@ -90,8 +136,8 @@ export function AdminGalleryManager() {
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [imageMarkedForRemoval, setImageMarkedForRemoval] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,11 +149,16 @@ export function AdminGalleryManager() {
   const editingItem = editingId
     ? items.find((item) => item.id === editingId) ?? null
     : null;
-  const imageDisplayUrl =
-    !imageMarkedForRemoval && (imagePreviewUrl || editingItem?.image_src || "");
-  const resolvedPreviewImageSrc = imageDisplayUrl
-    ? resolveGalleryImageSrc(imageDisplayUrl)
-    : "";
+  const isMultiCreate = editingId === null && imageFiles.length > 1;
+  const editPreviewSrc = (() => {
+    if (editingId === null || imageMarkedForRemoval) {
+      return "";
+    }
+    if (imagePreviewUrls[0]) {
+      return imagePreviewUrls[0];
+    }
+    return editingItem?.image_src ? resolveGalleryImageSrc(editingItem.image_src) : "";
+  })();
 
   const hasDuplicateCategoryOrder = useCallback(
     (category: string, displayOrder: string, excludeId?: number | null) => {
@@ -234,15 +285,15 @@ export function AdminGalleryManager() {
   }, [loadItems]);
 
   useEffect(() => {
-    if (!imageFile) {
-      setImagePreviewUrl("");
+    if (!imageFiles.length) {
+      setImagePreviewUrls([]);
       return;
     }
 
-    const nextUrl = URL.createObjectURL(imageFile);
-    setImagePreviewUrl(nextUrl);
-    return () => URL.revokeObjectURL(nextUrl);
-  }, [imageFile]);
+    const nextUrls = imageFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviewUrls(nextUrls);
+    return () => nextUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [imageFiles]);
 
   useEffect(() => {
     if (!formOpen || editingId !== null) {
@@ -258,8 +309,11 @@ export function AdminGalleryManager() {
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
-    setImageFile(null);
+    setImageFiles([]);
     setImageMarkedForRemoval(false);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
   };
 
   const openCreateForm = () => {
@@ -276,11 +330,10 @@ export function AdminGalleryManager() {
       description: item.description,
       display_order: String(item.display_order),
       is_featured: item.is_featured,
-      show_in_slider: item.show_in_slider,
       is_active: item.is_active,
     });
     setEditingId(item.id ?? null);
-    setImageFile(null);
+    setImageFiles([]);
     setImageMarkedForRemoval(false);
     setError("");
     setSuccess("");
@@ -420,61 +473,129 @@ export function AdminGalleryManager() {
             setSuccess("");
 
             try {
-              const isEditing = editingId !== null;
-              if (hasDuplicateCategoryOrder(form.category, form.display_order, editingId)) {
-                throw new Error(
-                  `Display order "${form.display_order}" is already used in the "${form.category}" category.`,
-                );
-              }
-
-              const payload = new FormData();
-              payload.append("title", form.title);
-              payload.append("category", form.category);
-              payload.append("description", form.description);
-              payload.append("display_order", form.display_order || "0");
-              payload.append("is_featured", String(form.is_featured));
-              payload.append("show_in_slider", String(form.show_in_slider));
-              payload.append("is_active", String(form.is_active));
-
-              if (imageFile) {
-                payload.append("image", imageFile);
-              }
-              if (imageMarkedForRemoval && !imageFile) {
-                payload.append("image_clear", "1");
-              }
-
-              const response = await fetch(
-                editingId
-                  ? `${API_BASE_URL}/gallery/${editingId}/`
-                  : `${API_BASE_URL}/gallery/`,
-                {
-                  method: editingId ? "PATCH" : "POST",
-                  headers: await getAuthHeaders(),
-                  body: payload,
-                },
-              );
-
-              const rawText = await response.text();
-              const data = parseApiPayload(rawText);
-              if (!response.ok) {
-                if (typeof data === "string" && data.trim()) {
-                  throw new Error(data.length > 220 ? `${data.slice(0, 220).trim()}...` : data);
+              if (editingId !== null) {
+                if (hasDuplicateCategoryOrder(form.category, form.display_order, editingId)) {
+                  throw new Error(
+                    `Display order "${form.display_order}" is already used in the "${form.category}" category.`,
+                  );
                 }
 
-                throw new Error(
-                  getApiErrorMessage(data, `Unable to save gallery item. (${response.status})`),
-                );
+                const payload = new FormData();
+                payload.append("title", form.title);
+                payload.append("category", form.category);
+                payload.append("description", form.description);
+                payload.append("display_order", form.display_order || "0");
+                payload.append("is_featured", String(form.is_featured));
+                payload.append("is_active", String(form.is_active));
+
+                const replacementFile = imageFiles[0];
+                if (replacementFile) {
+                  payload.append("image", replacementFile);
+                }
+                if (imageMarkedForRemoval && !replacementFile) {
+                  payload.append("image_clear", "1");
+                }
+
+                const response = await fetch(`${API_BASE_URL}/gallery/${editingId}/`, {
+                  method: "PATCH",
+                  headers: await getAuthHeaders(),
+                  body: payload,
+                });
+
+                const rawText = await response.text();
+                const data = parseApiPayload(rawText);
+                if (!response.ok) {
+                  if (typeof data === "string" && data.trim()) {
+                    throw new Error(data.length > 220 ? `${data.slice(0, 220).trim()}...` : data);
+                  }
+
+                  throw new Error(
+                    getApiErrorMessage(data, `Unable to save gallery item. (${response.status})`),
+                  );
+                }
+
+                await loadItems();
+                resetForm();
+                setFormOpen(false);
+                setSuccess("Gallery item updated.");
+                return;
+              }
+
+              // Create — a single item, or several at once when multiple files are chosen.
+              const files = imageFiles;
+
+              if (files.length <= 1) {
+                if (hasDuplicateCategoryOrder(form.category, form.display_order, null)) {
+                  throw new Error(
+                    `Display order "${form.display_order}" is already used in the "${form.category}" category.`,
+                  );
+                }
+
+                await createGalleryItem({
+                  title: form.title,
+                  category: form.category,
+                  description: form.description,
+                  display_order: form.display_order,
+                  is_featured: form.is_featured,
+                  is_active: form.is_active,
+                  image: files[0] ?? null,
+                });
+
+                await loadItems();
+                resetForm();
+                setFormOpen(true);
+                requestAnimationFrame(() => focusFirstFormField(formRef.current));
+                setSuccess("Gallery item added.");
+                return;
+              }
+
+              // Multiple files: one gallery item per photo, with auto titles and order.
+              let startOrder = Number.parseInt(getNextCategoryOrder(form.category), 10);
+              if (!Number.isFinite(startOrder) || startOrder < 1) {
+                startOrder = 1;
+              }
+              const baseTitle = form.title.trim();
+
+              let added = 0;
+              const failures: string[] = [];
+              for (let index = 0; index < files.length; index += 1) {
+                const file = files[index];
+                const title = baseTitle
+                  ? `${baseTitle} ${index + 1}`
+                  : deriveTitleFromFile(file, form.category, index);
+                try {
+                  await createGalleryItem({
+                    title,
+                    category: form.category,
+                    description: form.description,
+                    display_order: String(startOrder + index),
+                    is_featured: form.is_featured,
+                    is_active: form.is_active,
+                    image: file,
+                  });
+                  added += 1;
+                } catch (uploadError) {
+                  failures.push(
+                    uploadError instanceof Error ? uploadError.message : "Upload failed.",
+                  );
+                }
               }
 
               await loadItems();
-              resetForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
+
+              if (added > 0) {
+                resetForm();
                 setFormOpen(true);
                 requestAnimationFrame(() => focusFirstFormField(formRef.current));
+                setSuccess(
+                  `${added} image${added === 1 ? "" : "s"} added to "${form.category}".`,
+                );
               }
-              setSuccess(isEditing ? "Gallery item updated." : "Gallery item added.");
+              if (failures.length) {
+                setError(
+                  `${failures.length} image${failures.length === 1 ? "" : "s"} could not be added: ${failures[0]}`,
+                );
+              }
             } catch (requestError) {
               setError(
                 requestError instanceof Error
@@ -500,7 +621,10 @@ export function AdminGalleryManager() {
                     }))
                   }
                   className="admin-master-input"
-                  required
+                  placeholder={
+                    isMultiCreate ? "Optional base name (auto-named from files)" : undefined
+                  }
+                  required={!isMultiCreate}
                 />
               </label>
 
@@ -555,7 +679,7 @@ export function AdminGalleryManager() {
               </label>
 
               <label className="admin-master-label w-full max-w-[24rem]">
-                <span>Display Order</span>
+                <span>Display Order{isMultiCreate ? " (auto)" : ""}</span>
                 <input
                   type="number"
                   min="0"
@@ -567,20 +691,52 @@ export function AdminGalleryManager() {
                     }))
                   }
                   className="admin-master-input"
-                  required
+                  required={!isMultiCreate}
+                  disabled={isMultiCreate}
                 />
+                {isMultiCreate ? (
+                  <span className="mt-1 text-[0.6rem] font-medium text-slate-600">
+                    Auto-assigned per image for this batch.
+                  </span>
+                ) : null}
               </label>
 
               <label className="admin-master-label w-full max-w-[24rem]">
-                <span>Image</span>
-                <div className="flex min-h-[4rem] w-[52%] min-w-[12.5rem] items-center justify-between gap-3 rounded-[1rem] border border-dashed border-[rgba(39,60,117,0.18)] bg-white/80 px-3 py-2">
+                <span>Image{editingId === null ? "s" : ""}</span>
+                <div className="flex min-h-[4rem] w-full flex-wrap items-center gap-3 rounded-[1rem] border border-dashed border-[rgba(39,60,117,0.18)] bg-white/80 px-3 py-2">
                   <input
                     ref={imageInputRef}
                     type="file"
                     accept="image/*"
+                    multiple={editingId === null}
                     onChange={(event) => {
-                      setImageFile(event.target.files?.[0] ?? null);
+                      const selectedFiles = event.target.files
+                        ? Array.from(event.target.files)
+                        : [];
+                      setImageFiles((current) => {
+                        if (editingId !== null) {
+                          return selectedFiles.slice(0, 1);
+                        }
+                        // Create mode: accumulate across picks so the admin can
+                        // keep clicking "Upload Images" to add more, skipping
+                        // files already chosen.
+                        const merged = [...current];
+                        for (const file of selectedFiles) {
+                          const isDuplicate = merged.some(
+                            (existing) =>
+                              existing.name === file.name && existing.size === file.size,
+                          );
+                          if (!isDuplicate) {
+                            merged.push(file);
+                          }
+                        }
+                        return merged;
+                      });
                       setImageMarkedForRemoval(false);
+                      // Clear the input so re-picking the same file still fires onChange.
+                      if (imageInputRef.current) {
+                        imageInputRef.current.value = "";
+                      }
                     }}
                     className="hidden"
                   />
@@ -591,33 +747,63 @@ export function AdminGalleryManager() {
                     className="admin-master-btn admin-master-btn-secondary min-h-[1.65rem] min-w-[5.2rem] px-2 py-1 text-[0.62rem] font-medium"
                     style={{ fontSize: "0.62rem", fontWeight: 500 }}
                   >
-                    Upload Image
+                    Upload Image{editingId === null ? "s" : ""}
                   </button>
-                  {resolvedPreviewImageSrc ? (
-                    <div className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                      <img
-                        src={resolvedPreviewImageSrc}
-                        alt="Gallery preview"
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreviewUrl("");
-                          setImageMarkedForRemoval(true);
-                          if (imageInputRef.current) {
-                            imageInputRef.current.value = "";
-                          }
-                        }}
-                        className="absolute inset-0 flex items-center justify-center bg-[#091224]/0 text-base font-semibold text-white opacity-0 transition group-hover:bg-[#091224]/70 group-hover:opacity-100"
-                        aria-label="Remove image"
-                      >
-                        x
-                      </button>
-                    </div>
-                  ) : null}
+                  {editingId === null
+                    ? imagePreviewUrls.map((url, index) => (
+                        <div
+                          key={url}
+                          className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                        >
+                          <img
+                            src={url}
+                            alt={`Selected image ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImageFiles((current) =>
+                                current.filter((_, fileIndex) => fileIndex !== index),
+                              )
+                            }
+                            className="absolute inset-0 flex items-center justify-center bg-[#091224]/0 text-base font-semibold text-white opacity-0 transition group-hover:bg-[#091224]/70 group-hover:opacity-100"
+                            aria-label={`Remove image ${index + 1}`}
+                          >
+                            x
+                          </button>
+                        </div>
+                      ))
+                    : editPreviewSrc ? (
+                        <div className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                          <img
+                            src={editPreviewSrc}
+                            alt="Gallery preview"
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageFiles([]);
+                              setImageMarkedForRemoval(true);
+                              if (imageInputRef.current) {
+                                imageInputRef.current.value = "";
+                              }
+                            }}
+                            className="absolute inset-0 flex items-center justify-center bg-[#091224]/0 text-base font-semibold text-white opacity-0 transition group-hover:bg-[#091224]/70 group-hover:opacity-100"
+                            aria-label="Remove image"
+                          >
+                            x
+                          </button>
+                        </div>
+                      ) : null}
                 </div>
+                {editingId === null && imageFiles.length > 1 ? (
+                  <span className="mt-1 text-[0.6rem] font-medium text-slate-600">
+                    {imageFiles.length} images selected — each becomes its own item in &quot;
+                    {form.category || "category"}&quot;.
+                  </span>
+                ) : null}
               </label>
             </div>
 
@@ -631,16 +817,6 @@ export function AdminGalleryManager() {
                   }
                 />
                 Featured
-              </label>
-              <label className="inline-flex items-center gap-2 text-[0.62rem] font-medium uppercase tracking-[0.08em] text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={form.show_in_slider}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, show_in_slider: event.target.checked }))
-                  }
-                />
-                Show In Slider
               </label>
               <label className="inline-flex items-center gap-2 text-[0.62rem] font-medium uppercase tracking-[0.08em] text-slate-700">
                 <input
@@ -687,7 +863,6 @@ export function AdminGalleryManager() {
                 <th>Category</th>
                 <th>Order</th>
                 <th>Featured</th>
-                <th>Slider</th>
                 <th>Status</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -696,7 +871,7 @@ export function AdminGalleryManager() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={7}
                     className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500"
                   >
                     Loading gallery items...
@@ -761,9 +936,6 @@ export function AdminGalleryManager() {
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">
                       {item.is_featured ? "Featured" : "Standard"}
                     </td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">
-                      {item.show_in_slider ? "Shown" : "Hidden"}
-                    </td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm">
                       <span
                         className={`admin-badge ${
@@ -823,7 +995,7 @@ export function AdminGalleryManager() {
               ) : (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={7}
                     className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500"
                   >
                     No gallery items found yet. Use the Add Image button to create one.
