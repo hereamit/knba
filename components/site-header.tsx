@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EnquiryModal } from "@/components/enquiry-modal";
+import { MemberSubmissionModal } from "@/components/member-submission-modal";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { API_BASE_URL } from "@/lib/api";
 import { resolveOrganizationImageSrc } from "@/lib/organization-profile";
@@ -13,6 +14,8 @@ export function SiteHeader() {
   const { profile } = useOrganizationProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const [memberSubmissionOpen, setMemberSubmissionOpen] = useState(false);
+  const [submissionsOpen, setSubmissionsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notice, setNotice] = useState<null | typeof emergencyNotice>(null);
 
@@ -75,6 +78,28 @@ export function SiteHeader() {
     };
 
     void loadEmergencyNotice();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const loadSettings = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/site-settings/`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { member_submissions_open?: boolean };
+        if (!isCancelled) {
+          setSubmissionsOpen(Boolean(data?.member_submissions_open));
+        }
+      } catch {
+        if (!isCancelled) setSubmissionsOpen(false);
+      }
+    };
+    void loadSettings();
     return () => {
       isCancelled = true;
     };
@@ -167,13 +192,23 @@ export function SiteHeader() {
                   </Link>
                 );
               })}
-              <button
-                type="button"
-                onClick={() => setEnquiryOpen(true)}
-                className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
-              >
-                Visitor Enquiry
-              </button>
+              {submissionsOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setMemberSubmissionOpen(true)}
+                  className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#16a34a,#22c55e)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(22,163,74,0.28)] transition hover:-translate-y-0.5"
+                >
+                  Submit Member Details
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEnquiryOpen(true)}
+                  className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
+                >
+                  Visitor Enquiry
+                </button>
+              )}
             </nav>
 
             <button
@@ -213,16 +248,29 @@ export function SiteHeader() {
                       </Link>
                     );
                   })}
-                  <button
-                    type="button"
-                    className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setEnquiryOpen(true);
-                    }}
-                  >
-                    Visitor Enquiry
-                  </button>
+                  {submissionsOpen ? (
+                    <button
+                      type="button"
+                      className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#16a34a,#22c55e)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(22,163,74,0.28)] transition hover:-translate-y-0.5"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMemberSubmissionOpen(true);
+                      }}
+                    >
+                      Submit Member Details
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mt-2 inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-[linear-gradient(135deg,#eb2f06,#ff6b4a)] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(235,47,6,0.22)] transition hover:-translate-y-0.5"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setEnquiryOpen(true);
+                      }}
+                    >
+                      Visitor Enquiry
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -231,6 +279,9 @@ export function SiteHeader() {
       </header>
       {enquiryOpen ? (
         <EnquiryModal onClose={() => setEnquiryOpen(false)} />
+      ) : null}
+      {memberSubmissionOpen ? (
+        <MemberSubmissionModal onClose={() => setMemberSubmissionOpen(false)} />
       ) : null}
     </>
   );

@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from .member_role_caps import get_role_cap, role_full_message
 from .models import (
     BusinessShowcaseItem,
     BusinessShowcaseSubmission,
@@ -22,6 +23,7 @@ from .models import (
     HeroSlide,
     HomeHeroImage,
     MemberProfile,
+    MemberSubmission,
     OrganizationProfile,
     ServiceItem,
     SiteSettings,
@@ -43,6 +45,8 @@ from .serializers import (
     HomeHeroImageSerializer,
     LoginSerializer,
     MemberProfileSerializer,
+    MemberSubmissionCreateSerializer,
+    MemberSubmissionSerializer,
     ServiceItemSerializer,
     SiteSettingsSerializer,
     OrganizationProfileSerializer,
@@ -576,6 +580,203 @@ class BusinessShowcaseSubmissionViewSet(viewsets.ModelViewSet):
 
         admin_notes = str(request.data.get("admin_notes", "")).strip()
         submission.review_status = BusinessShowcaseSubmission.ReviewStatus.REJECTED
+        submission.reviewed_at = timezone.now()
+        submission.admin_notes = admin_notes
+        submission.save(
+            update_fields=[
+                "review_status",
+                "reviewed_at",
+                "admin_notes",
+                "updated_at",
+            ]
+        )
+
+        serializer = self.get_serializer(submission)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MemberSubmissionViewSet(viewsets.ModelViewSet):
+    queryset = MemberSubmission.objects.select_related("published_member").all()
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        review_status = self.request.query_params.get("status")
+        if review_status:
+            queryset = queryset.filter(review_status=review_status)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return MemberSubmissionCreateSerializer
+        return MemberSubmissionSerializer
+
+    @staticmethod
+    def _get_active_term():
+        return (
+            CommitteeTerm.objects.filter(is_current=True, is_active=True).first()
+            or CommitteeTerm.objects.filter(is_active=True)
+            .order_by("display_order", "-start_year", "id")
+            .first()
+        )
+
+    @classmethod
+    def _check_role_capacity(cls, role: str, ignore_member_id=None):
+        cap = get_role_cap(role)
+        if cap is None:
+            return True, ""
+        active_term = cls._get_active_term()
+        if active_term is None:
+            return True, ""
+        normalized = role.strip()
+        existing = MemberProfile.objects.filter(
+            term=active_term, is_active=True, role__iexact=normalized
+        )
+        if ignore_member_id is not None:
+            existing = existing.exclude(pk=ignore_member_id)
+        if existing.count() >= int(cap["max_count"]):
+            return False, role_full_message(normalized, int(cap["max_count"]))
+        return True, ""
+
+    def create(self, request, *args, **kwargs):
+        settings_record = SiteSettings.objects.order_by("id").first()
+        if settings_record is None or not settings_record.member_submissions_open:
+            return Response(
+                {"detail": "Member submissions are currently closed."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        proposed_role = str(request.data.get("role", "")).strip()
+        ok, message = self._check_role_capacity(proposed_role)
+        if not ok:
+            return Response(
+                {"detail": message, "role": [message]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().create(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def approve(self, request, pk=None):
+        submission = self.get_object()
+
+        approved_name = str(request.data.get("name", submission.name)).strip() or submission.name
+        approved_role = str(request.data.get("role", submission.role)).strip() or submission.role
+
+        ignore_id = submission.published_member_id
+        ok, message = self._check_role_capacity(approved_role, ignore_member_id=ignore_id)
+        if not ok:
+            return Response(
+                {"detail": message, "role": [message]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        approved_category = (
+            str(request.data.get("category", submission.category)).strip()
+            or submission.category
+        )
+        approved_phone = str(request.data.get("phone", submission.phone)).strip() or submission.phone
+        approved_email = str(request.data.get("email", submission.email)).strip() or submission.email
+        approved_note = str(request.data.get("note", submission.note)).strip()
+
+        term_id_raw = request.data.get("term")
+        try:
+            term_id = int(term_id_raw) if term_id_raw not in (None, "", "null") else None
+        except (TypeError, ValueError):
+            term_id = None
+
+        if term_id is None:
+            current_term = self._get_active_term()
+            if current_term is not None:
+                term_id = current_term.id
+
+        display_order = request.data.get("display_order", 0)
+        try:
+            display_order = int(display_order)
+        except (TypeError, ValueError):
+            display_order = 0
+
+        if display_order <= 0:
+            display_order = (
+                MemberProfile.objects.filter(category=approved_category).aggregate(
+                    max_order=Max("display_order")
+                )["max_order"]
+                or 0
+            ) + 1
+
+        if submission.published_member_id:
+            published_member = submission.published_member
+            published_member.name = approved_name
+            published_member.role = approved_role
+            published_member.category = approved_category
+            published_member.phone = approved_phone
+            published_member.email = approved_email
+            published_member.note = approved_note
+            if term_id is not None:
+                published_member.term_id = term_id
+            published_member.display_order = display_order
+            published_member.is_active = True
+            published_member.save()
+        else:
+            published_member = MemberProfile.objects.create(
+                name=approved_name,
+                role=approved_role,
+                category=approved_category,
+                phone=approved_phone,
+                email=approved_email,
+                note=approved_note,
+                photo=submission.photo if submission.photo else None,
+                term_id=term_id,
+                display_order=display_order,
+                is_active=True,
+            )
+
+        admin_notes = str(request.data.get("admin_notes", "")).strip()
+        submission.name = approved_name
+        submission.role = approved_role
+        submission.category = approved_category
+        submission.phone = approved_phone
+        submission.email = approved_email
+        submission.note = approved_note
+        submission.review_status = MemberSubmission.ReviewStatus.APPROVED
+        submission.reviewed_at = timezone.now()
+        submission.published_member = published_member
+        if admin_notes:
+            submission.admin_notes = admin_notes
+        submission.save(
+            update_fields=[
+                "name",
+                "role",
+                "category",
+                "phone",
+                "email",
+                "note",
+                "review_status",
+                "reviewed_at",
+                "published_member",
+                "admin_notes",
+                "updated_at",
+            ]
+        )
+
+        serializer = self.get_serializer(submission)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        submission = self.get_object()
+        if submission.published_member_id:
+            return Response(
+                {"detail": "Approved submissions cannot be rejected."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        admin_notes = str(request.data.get("admin_notes", "")).strip()
+        submission.review_status = MemberSubmission.ReviewStatus.REJECTED
         submission.reviewed_at = timezone.now()
         submission.admin_notes = admin_notes
         submission.save(
