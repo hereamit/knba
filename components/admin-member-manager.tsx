@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { NepalFlagIcon } from "@/components/nepal-flag-icon";
 import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
-  focusFirstFormField,
   moveToNextFormField,
   preventMouseOnlyUploadKeyboard,
   resetEnterNavigationState,
@@ -146,6 +148,7 @@ export function AdminMemberManager({
   const [termSaving, setTermSaving] = useState(false);
   const [termError, setTermError] = useState("");
   const [termSuccess, setTermSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
 
   const [items, setItems] = useState<MemberRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -442,16 +445,10 @@ export function AdminMemberManager({
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (termFormOpen && editingTermId === null) {
-                setTermFormOpen(false);
-                return;
-              }
-              openCreateTermForm();
-            }}
+            onClick={openCreateTermForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {termFormOpen && editingTermId === null ? "Close Form" : "Add Term"}
+            Add Term
           </button>
         </div>
       </div>
@@ -470,9 +467,16 @@ export function AdminMemberManager({
       ) : null}
 
       {showTermsSection && termFormOpen ? (
+        <AdminFormModal
+          title={editingTermId ? "Edit Term" : "Add Term"}
+          onClose={() => {
+            setTermFormOpen(false);
+            resetTermForm();
+          }}
+          maxWidthClass="max-w-2xl"
+        >
         <form
           ref={termFormRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -516,13 +520,10 @@ export function AdminMemberManager({
 
               await loadTerms();
               resetTermForm();
-              if (isEditing) {
-                setTermFormOpen(false);
-              } else {
-                setTermFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(termFormRef.current));
-              }
-              setTermSuccess(isEditing ? "Term updated." : "Term added.");
+              setTermFormOpen(false);
+              const termSavedText = isEditing ? "Term updated." : "Term added.";
+              setTermSuccess(termSavedText);
+              setSavedMessage(termSavedText);
             } catch (requestError) {
               setTermError(
                 requestError instanceof Error ? requestError.message : "Unable to save member term.",
@@ -634,6 +635,7 @@ export function AdminMemberManager({
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       {showTermsSection ? (
@@ -647,14 +649,13 @@ export function AdminMemberManager({
                 <th>Members</th>
                 <th>Current</th>
                 <th>Status</th>
-                <th>Order</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {termLoading ? (
                 <tr>
-                  <td colSpan={7} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={6} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     Loading member terms...
                   </td>
                 </tr>
@@ -680,7 +681,6 @@ export function AdminMemberManager({
                         {term.is_active ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{term.display_order}</td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
                         <button type="button" onClick={() => setSelectedTermId(term.id ?? null)} className="admin-table-btn admin-table-btn-edit">
@@ -713,11 +713,14 @@ export function AdminMemberManager({
                             Current
                           </button>
                         ) : null}
-                        <button type="button" onClick={() => openEditTermForm(term)} className="admin-table-btn admin-table-btn-edit">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
+                          onClick={() => openEditTermForm(term)}
+                          label="Edit term"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete term"
                           onClick={async () => {
                             setTermError("");
                             setTermSuccess("");
@@ -740,17 +743,14 @@ export function AdminMemberManager({
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={6} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     No term found yet. Use the Add Term button to create one first.
                   </td>
                 </tr>
@@ -796,17 +796,11 @@ export function AdminMemberManager({
             </label>
             <button
               type="button"
-              onClick={() => {
-                if (formOpen && editingId === null) {
-                  setFormOpen(false);
-                  return;
-                }
-                openCreateMemberForm();
-              }}
+              onClick={openCreateMemberForm}
               className="admin-master-btn admin-master-btn-primary"
               disabled={!selectedTermId}
             >
-              {formOpen && editingId === null ? "Close Form" : "Add Member"}
+              Add Member
             </button>
           </div>
         </div>
@@ -826,9 +820,16 @@ export function AdminMemberManager({
       ) : null}
 
       {showMembersSection && formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Member" : "Add Member"}
+          subtitle={selectedTerm ? selectedTerm.label : undefined}
+          onClose={() => {
+            setFormOpen(false);
+            resetMemberForm();
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -887,13 +888,12 @@ export function AdminMemberManager({
 
               await loadMembers(Number(form.term));
               resetMemberForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-              }
-              setSuccess(isEditing ? "Member record updated." : "Member record added.");
+              setFormOpen(false);
+              const memberSavedText = isEditing
+                ? "Member record updated."
+                : "Member record added.";
+              setSuccess(memberSavedText);
+              setSavedMessage(memberSavedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error ? requestError.message : "Unable to save member record.",
@@ -1139,6 +1139,7 @@ export function AdminMemberManager({
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       {showMembersSection ? (
@@ -1168,12 +1169,10 @@ export function AdminMemberManager({
               <tr className="text-left">
                 <th>Photo</th>
                 <th>Name</th>
-                <th>Term</th>
                 <th>Section</th>
                 <th>Role</th>
                 <th>Phone</th>
                 <th>Email</th>
-                <th>Order</th>
                 <th>Status</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -1181,7 +1180,7 @@ export function AdminMemberManager({
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={8} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     Loading member records...
                   </td>
                 </tr>
@@ -1200,12 +1199,10 @@ export function AdminMemberManager({
                       )}
                     </td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-700">{item.name}</td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.term_label}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.category_label || item.category}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.role}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{formatNepalPhone(item.phone)}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.email}</td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.display_order}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm">
                       <span className={`admin-badge ${item.is_active ? "admin-badge-active" : "admin-badge-inactive"}`}>
                         {item.is_active ? "Active" : "Inactive"}
@@ -1213,11 +1210,14 @@ export function AdminMemberManager({
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => openEditForm(item)} className="admin-table-btn admin-table-btn-edit">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
+                          onClick={() => openEditForm(item)}
+                          label="Edit member"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete member"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -1241,17 +1241,14 @@ export function AdminMemberManager({
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={8} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     {selectedTerm
                       ? items.length
                         ? "No member record matched your search."
@@ -1264,6 +1261,10 @@ export function AdminMemberManager({
           </table>
         </div>
       </section>
+      ) : null}
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
       ) : null}
     </section>
   );

@@ -329,7 +329,7 @@ export default function AboutPage() {
               target="_blank"
               rel="noopener noreferrer"
               download
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(30,55,153,0.22)] transition hover:bg-primary-soft"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white! shadow-[0_18px_36px_rgba(30,55,153,0.22)] transition hover:bg-primary-soft"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

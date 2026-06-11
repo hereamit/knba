@@ -1,4 +1,3 @@
-import { galleryItems as fallbackGalleryItems, heroSlides } from "@/lib/site-data";
 import { MEDIA_BASE_URL } from "@/lib/api";
 
 export type GalleryRecord = {
@@ -31,19 +30,6 @@ export function resolveGalleryImageSrc(src: string) {
   return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
-export const fallbackGalleryRecords: GalleryRecord[] = fallbackGalleryItems.map(
-  (item, index) => ({
-    id: index + 1,
-    title: item.title,
-    category: item.category,
-    description: item.description,
-    image_src: item.src,
-    is_featured: index < 5,
-    display_order: index + 1,
-    is_active: true,
-  }),
-);
-
 export function normalizeGalleryRecord(record: GalleryApiRecord, index = 0): GalleryRecord {
   const resolvedImageSource =
     record.image_src ??
@@ -62,11 +48,4 @@ export function normalizeGalleryRecord(record: GalleryApiRecord, index = 0): Gal
     display_order: record.display_order ?? index + 1,
     is_active: record.is_active ?? true,
   };
-}
-
-// The home hero slider is driven by HomeHeroImage records (managed in the
-// admin Home section) — it is intentionally not linked to gallery items.
-// This static set is only the last-resort fallback when no hero images exist.
-export function getFallbackSliderSlides() {
-  return heroSlides;
 }

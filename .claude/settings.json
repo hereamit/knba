@@ -5,7 +5,8 @@
       "Read(//d/d/knba/backend/**)",
       "Read(//d/d/knba/backend/api/**)",
       "Bash(./venv/Scripts/python.exe manage.py check)",
-      "Bash(./venv/Scripts/python.exe manage.py migrate api)"
+      "Bash(./venv/Scripts/python.exe manage.py migrate api)",
+      "Bash(git add *)"
     ]
   }
 }

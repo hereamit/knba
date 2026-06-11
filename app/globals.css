@@ -354,6 +354,20 @@ a {
   color: #c53030;
 }
 
+.admin-table-btn-icon {
+  width: 1.9rem;
+  min-height: 1.9rem;
+  padding: 0;
+}
+
+.admin-table-btn-edit:hover {
+  border-color: rgba(39, 60, 117, 0.55);
+}
+
+.admin-table-btn-delete:hover {
+  border-color: rgba(197, 48, 48, 0.6);
+}
+
 .hero-grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),

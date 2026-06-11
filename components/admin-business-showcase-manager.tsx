@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { API_BASE_URL, MEDIA_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import { PhoneNumbersInput } from "@/components/phone-numbers-input";
 import {
@@ -10,7 +13,6 @@ import {
   type PhoneEntry,
 } from "@/lib/phone";
 import {
-  focusFirstFormField,
   moveToNextFormField,
   preventMouseOnlyUploadKeyboard,
   resetEnterNavigationState,
@@ -254,6 +256,7 @@ export function AdminBusinessShowcaseManager() {
   const [error, setError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const formRef = useRef<HTMLFormElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -577,16 +580,10 @@ export function AdminBusinessShowcaseManager() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add Business"}
+            Add Business
           </button>
         </div>
       </div>
@@ -714,9 +711,15 @@ export function AdminBusinessShowcaseManager() {
       </section>
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Business" : "Add Business"}
+          onClose={() => {
+            resetForm();
+            setFormOpen(false);
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -783,13 +786,12 @@ export function AdminBusinessShowcaseManager() {
 
               await loadItems();
               resetForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-              }
-              setSuccess(isEditing ? "Business listing updated." : "Business listing added.");
+              setFormOpen(false);
+              const savedText = isEditing
+                ? "Business listing updated."
+                : "Business listing added.";
+              setSuccess(savedText);
+              setSavedMessage(savedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error
@@ -1054,6 +1056,7 @@ export function AdminBusinessShowcaseManager() {
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <section className="admin-card rounded-[1.2rem] p-5 md:p-6">
@@ -1143,15 +1146,14 @@ export function AdminBusinessShowcaseManager() {
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
                           onClick={() => openEditForm(item)}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                          label="Edit business"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete business"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -1180,10 +1182,7 @@ export function AdminBusinessShowcaseManager() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -1204,6 +1203,10 @@ export function AdminBusinessShowcaseManager() {
           </table>
         </div>
       </section>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
-  focusFirstFormField,
   moveToNextFormField,
   preventMouseOnlyUploadKeyboard,
   resetEnterNavigationState,
@@ -132,6 +134,8 @@ function deriveTitleFromFile(file: File, category: string, index: number) {
 export function AdminGalleryManager() {
   const [items, setItems] = useState<GalleryRecord[]>([]);
   const [orderDrafts, setOrderDrafts] = useState<Record<string, string>>({});
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [featuredFilter, setFeaturedFilter] = useState<"all" | "featured" | "standard">("all");
   const [form, setForm] = useState<GalleryFormState>(emptyForm);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -143,6 +147,7 @@ export function AdminGalleryManager() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const formRef = useRef<HTMLFormElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -159,6 +164,20 @@ export function AdminGalleryManager() {
     }
     return editingItem?.image_src ? resolveGalleryImageSrc(editingItem.image_src) : "";
   })();
+
+  const filteredItems = useMemo(() => {
+    const normalizedCategory = categoryFilter.trim().toLowerCase();
+
+    return items.filter((item) => {
+      const matchesCategory =
+        !normalizedCategory || item.category.trim().toLowerCase() === normalizedCategory;
+      const matchesFeatured =
+        featuredFilter === "all" ||
+        (featuredFilter === "featured" ? item.is_featured : !item.is_featured);
+
+      return matchesCategory && matchesFeatured;
+    });
+  }, [items, categoryFilter, featuredFilter]);
 
   const hasDuplicateCategoryOrder = useCallback(
     (category: string, displayOrder: string, excludeId?: number | null) => {
@@ -434,16 +453,10 @@ export function AdminGalleryManager() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add Image"}
+            Add Image
           </button>
         </div>
       </div>
@@ -461,9 +474,15 @@ export function AdminGalleryManager() {
       ) : null}
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Image" : "Add Image"}
+          onClose={() => {
+            resetForm();
+            setFormOpen(false);
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -518,6 +537,7 @@ export function AdminGalleryManager() {
                 resetForm();
                 setFormOpen(false);
                 setSuccess("Gallery item updated.");
+                setSavedMessage("Gallery item updated.");
                 return;
               }
 
@@ -543,9 +563,9 @@ export function AdminGalleryManager() {
 
                 await loadItems();
                 resetForm();
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
+                setFormOpen(false);
                 setSuccess("Gallery item added.");
+                setSavedMessage("Gallery item added.");
                 return;
               }
 
@@ -583,13 +603,15 @@ export function AdminGalleryManager() {
 
               await loadItems();
 
-              if (added > 0) {
+              const addedText = `${added} image${added === 1 ? "" : "s"} added to "${form.category}".`;
+              if (added > 0 && !failures.length) {
                 resetForm();
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-                setSuccess(
-                  `${added} image${added === 1 ? "" : "s"} added to "${form.category}".`,
-                );
+                setFormOpen(false);
+                setSuccess(addedText);
+                setSavedMessage(addedText);
+              } else if (added > 0) {
+                // Some uploads failed — keep the form open so the rest can be retried.
+                setSuccess(addedText);
               }
               if (failures.length) {
                 setError(
@@ -851,9 +873,47 @@ export function AdminGalleryManager() {
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <section className="admin-card rounded-[1.2rem] p-5 md:p-6">
+        <div className="mb-4 flex flex-wrap items-end justify-end gap-3">
+          <label className="admin-master-label w-full max-w-[14rem]">
+            <span>Filter Category</span>
+            <div className="relative">
+              <select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className="admin-master-input appearance-none pr-14"
+              >
+                <option value="">All Categories</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+            </div>
+          </label>
+          <label className="admin-master-label w-full max-w-[14rem]">
+            <span>Filter Featured</span>
+            <div className="relative">
+              <select
+                value={featuredFilter}
+                onChange={(event) =>
+                  setFeaturedFilter(event.target.value as "all" | "featured" | "standard")
+                }
+                className="admin-master-input appearance-none pr-14"
+              >
+                <option value="all">All</option>
+                <option value="featured">Featured</option>
+                <option value="standard">Standard</option>
+              </select>
+              <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+            </div>
+          </label>
+        </div>
         <div className="overflow-x-auto">
           <table className="admin-master-table min-w-full border-separate border-spacing-y-2">
             <thead>
@@ -877,8 +937,8 @@ export function AdminGalleryManager() {
                     Loading gallery items...
                   </td>
                 </tr>
-              ) : items.length ? (
-                items.map((item) => (
+              ) : filteredItems.length ? (
+                filteredItems.map((item) => (
                   <tr key={item.id ?? item.title}>
                     <td className="rounded-l-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-slate-700">
                       {resolveGalleryImageSrc(item.image_src) ? (
@@ -947,15 +1007,14 @@ export function AdminGalleryManager() {
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
                           onClick={() => openEditForm(item)}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                          label="Edit gallery item"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete gallery item"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -984,10 +1043,7 @@ export function AdminGalleryManager() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -998,7 +1054,9 @@ export function AdminGalleryManager() {
                     colSpan={7}
                     className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500"
                   >
-                    No gallery items found yet. Use the Add Image button to create one.
+                    {items.length
+                      ? "No gallery items match the selected filters."
+                      : "No gallery items found yet. Use the Add Image button to create one."}
                   </td>
                 </tr>
               )}
@@ -1006,6 +1064,10 @@ export function AdminGalleryManager() {
           </table>
         </div>
       </section>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }

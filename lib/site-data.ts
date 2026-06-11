@@ -31,51 +31,6 @@ export type HeroSlide = {
   secondaryHref: string;
 };
 
-export const heroSlides: HeroSlide[] = [
-  {
-    eyebrow: "Khichapokhari Market Leadership",
-    title: "A stronger New Road business community starts with coordinated action.",
-    shortTitle: "Market Advocacy",
-    description:
-      "KNBA represents merchants, strengthens collaboration, and creates a more organized business environment for the Khichapokhari and New Road corridor.",
-    feature: "Collective representation for businesses, events, and market coordination.",
-    image: "/hero/new-road-1.jpg",
-    credit: "Photo: S Pakhrin / Wikimedia Commons",
-    primaryLabel: "About KNBA",
-    primaryHref: "/about",
-    secondaryLabel: "Our Services",
-    secondaryHref: "/services",
-  },
-  {
-    eyebrow: "Programs & Events",
-    title: "From orientation sessions to festivals, the association keeps members connected.",
-    shortTitle: "Events & Programs",
-    description:
-      "The website highlights events, gallery updates, and practical support services that keep the business community informed and engaged.",
-    feature: "Training, networking, celebration, and issue resolution under one platform.",
-    image: "/hero/new-road-gate.jpg",
-    credit: "Photo: Vyacheslav Argenberg / Wikimedia Commons",
-    primaryLabel: "View Gallery",
-    primaryHref: "/gallery",
-    secondaryLabel: "Contact Office",
-    secondaryHref: "/contact",
-  },
-  {
-    eyebrow: "Future-Ready Operations",
-    title: "A digital presence that reflects the energy and credibility of the organization.",
-    shortTitle: "Digital Presence",
-    description:
-      "This platform is designed to present KNBA professionally to members, visitors, and partners while preparing the frontend for Django REST-based administration.",
-    feature: "Clear communication, modern UI, and an admin workflow for faster updates.",
-    image: "/hero/asan-market.jpg",
-    credit: "Photo: McKay Savage / Wikimedia Commons",
-    primaryLabel: "Contact KNBA",
-    primaryHref: "/contact",
-    secondaryLabel: "Admin Portal",
-    secondaryHref: "/login",
-  },
-];
-
 export const homeStats = [
   {
     value: "325+",
@@ -318,64 +273,6 @@ export const businessShowcaseItems: BusinessShowcaseItem[] = [
       { label: "Facebook", href: "https://facebook.com/heritagegiftstationery" },
     ],
   },
-];
-
-export type GalleryItem = {
-  src: string;
-  title: string;
-  category: string;
-  description: string;
-};
-
-export const galleryItems: GalleryItem[] = [
-  {
-    src: "/hero/new-road-1.jpg",
-    title: "Market Coordination Meeting",
-    category: "Meetings",
-    description:
-      "Association leaders and member businesses reviewing market operations, shared concerns, and upcoming activities.",
-  },
-  {
-    src: "/hero/asan-market.jpg",
-    title: "Community Outreach Program",
-    category: "Community",
-    description:
-      "A collaborative outreach initiative focused on improving coordination, cleanliness, and neighborhood engagement.",
-  },
-  {
-    src: "/photos/kathmandu-market.jpg",
-    title: "Business Capacity Workshop",
-    category: "Training",
-    description:
-      "Training session for members on practical business topics, service quality, and digital adaptation.",
-  },
-  {
-    src: "/hero/new-road-gate.jpg",
-    title: "Festival Street Illumination",
-    category: "Events",
-    description:
-      "Seasonal decorations and collective preparations that strengthen the festive market atmosphere in New Road.",
-  },
-  {
-    src: "/photos/asan-tole.jpg",
-    title: "Stakeholder Partnership Session",
-    category: "Meetings",
-    description:
-      "Discussion with external stakeholders and local authorities to improve business services and market facilities.",
-  },
-  {
-    src: "/photos/new-road-2.jpg",
-    title: "New Road Heritage Walk",
-    category: "Community",
-    description:
-      "An activity that connects commerce, local culture, and neighborhood identity through guided participation.",
-  },
-];
-
-export const gallerySummary = [
-  { label: "Featured Albums", value: "06" },
-  { label: "Photo Categories", value: "04" },
-  { label: "Interactive Lightbox", value: "Enabled" },
 ];
 
 export const contactDetails = [

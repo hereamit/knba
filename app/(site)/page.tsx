@@ -17,8 +17,6 @@ import {
   type BusinessShowcaseRecord,
 } from "@/lib/business-showcase";
 import {
-  fallbackGalleryRecords,
-  getFallbackSliderSlides,
   normalizeGalleryRecord,
   resolveGalleryImageSrc,
   type GalleryRecord,
@@ -192,17 +190,17 @@ export default function HomePage() {
   const heroImageSlides = mapHomeHeroImagesToSlider(heroImages);
   const galleryPreviewItems = galleryRecords.filter((item) => item.is_featured);
   const previewGrid = (galleryPreviewItems.length ? galleryPreviewItems : galleryRecords).slice(0, 4);
-  const highlightImage = galleryPreviewItems[0] ?? galleryRecords[0] ?? fallbackGalleryRecords[0];
+  const highlightImage = galleryPreviewItems[0] ?? galleryRecords[0] ?? null;
   const businessCards = businessRecords.map(mapBusinessShowcaseRecordToCard);
   const homepageServices = (serviceRecords.length ? serviceRecords : fallbackServiceRecords).slice(0, 3);
 
   return (
     <div className="pb-20">
-      <section className="section-wrap pt-6 md:pt-10">
-        <HomeHeroSlider
-          slides={heroImageSlides.length ? heroImageSlides : getFallbackSliderSlides()}
-        />
-      </section>
+      {heroImageSlides.length ? (
+        <section className="section-wrap pt-6 md:pt-10">
+          <HomeHeroSlider slides={heroImageSlides} />
+        </section>
+      ) : null}
 
       <section className="section-wrap mt-6 md:mt-8">
         <div className="grid gap-4 md:grid-cols-4">
@@ -249,13 +247,17 @@ export default function HomePage() {
         </div>
         <div className="panel relative overflow-hidden rounded-[2rem] p-4">
           <div className="relative h-[360px] overflow-hidden rounded-[1.5rem] md:h-[420px]">
-            <Image
-              src={resolveGalleryImageSrc(highlightImage.image_src)}
-              alt={highlightImage.title}
-              fill
-              unoptimized
-              className="object-cover object-center"
-            />
+            {highlightImage ? (
+              <Image
+                src={resolveGalleryImageSrc(highlightImage.image_src)}
+                alt={highlightImage.title}
+                fill
+                unoptimized
+                className="object-cover object-center"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#dbe7ff,#b9cfff)]" />
+            )}
           </div>
         </div>
       </section>

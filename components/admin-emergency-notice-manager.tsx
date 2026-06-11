@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
 import { AdminPageHeader } from "@/components/admin-page-header";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 
 type EmergencyNoticeRecord = {
@@ -87,6 +90,7 @@ export function AdminEmergencyNoticeManager() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const pdfInputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -204,16 +208,10 @@ export function AdminEmergencyNoticeManager() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add Notice"}
+            Add Notice
           </button>
         </div>
       </div>
@@ -231,9 +229,15 @@ export function AdminEmergencyNoticeManager() {
       ) : null}
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Notice" : "Add Notice"}
+          onClose={() => {
+            resetForm();
+            setFormOpen(false);
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onSubmit={async (event) => {
             event.preventDefault();
             setSaving(true);
@@ -281,12 +285,12 @@ export function AdminEmergencyNoticeManager() {
 
               await loadItems();
               resetForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                setFormOpen(true);
-              }
-              setSuccess(isEditing ? "Emergency notice updated." : "Emergency notice added.");
+              setFormOpen(false);
+              const savedText = isEditing
+                ? "Emergency notice updated."
+                : "Emergency notice added.";
+              setSuccess(savedText);
+              setSavedMessage(savedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error
@@ -418,17 +422,6 @@ export function AdminEmergencyNoticeManager() {
 
             <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  setFormOpen(false);
-                  setError("");
-                }}
-                className="admin-master-btn admin-master-btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
                 type="submit"
                 className="admin-master-btn admin-master-btn-primary"
                 disabled={saving}
@@ -438,6 +431,7 @@ export function AdminEmergencyNoticeManager() {
             </div>
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <div className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-white/92 p-4 shadow-[0_18px_40px_rgba(18,31,69,0.05)]">
@@ -494,14 +488,12 @@ export function AdminEmergencyNoticeManager() {
                       {item.updated_at ? dateFormatter.format(new Date(item.updated_at)) : "--"}
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <AdminIconButton
+                          variant="edit"
                           onClick={() => openEditForm(item)}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          Edit
-                        </button>
+                          label="Edit notice"
+                        />
                         <button
                           type="button"
                           onClick={async () => {
@@ -538,8 +530,9 @@ export function AdminEmergencyNoticeManager() {
                         >
                           {item.is_active ? "Live" : "Activate"}
                         </button>
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete notice"
                           onClick={async () => {
                             if (typeof item.id !== "number") {
                               return;
@@ -578,10 +571,7 @@ export function AdminEmergencyNoticeManager() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -597,6 +587,10 @@ export function AdminEmergencyNoticeManager() {
           </table>
         </div>
       </div>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }

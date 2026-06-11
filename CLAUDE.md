@@ -38,6 +38,8 @@ The developer runs both dev servers themselves — don't auto-start `runserver` 
 - Each `lib/<resource>.ts` holds that resource's TS types plus `normalize*` / `map*` transforms. `lib/site-data.ts` holds large **static fallback** content rendered when the API is unreachable.
 - `components/admin-*.tsx` are the admin CRUD managers (one per resource); other `components/*.tsx` are public UI. `components/admin-shell.tsx` is the admin chrome wrapper.
 - **Phone numbers** (business showcase, etc.) are stored as a **single comma-separated string** (e.g. `"+977-9801234567, 014445555"`) — mobiles carry the `+977` country code, landlines keep their area code. `lib/phone.ts` parses/formats this; `components/phone-numbers-input.tsx` is the multi-entry editor. Validation is intentionally lenient (no fixed digit count).
+- **Calendar flipbook**: the About page renders `SiteSettings.calendar_pdf` (served as `calendar_pdf_url`) via `components/calendar-flipbook.tsx`, which lazy-imports `pdfjs-dist` to rasterize pages into a `react-pageflip` book. The pdf.js worker is a static asset at `public/pdf.worker.min.mjs` with its path hardcoded as `workerSrc` — keep that file in sync with the `pdfjs-dist` version on upgrade.
+- **Google Translate**: `components/google-translate-toggle.tsx` (mounted in `app/(site)/layout.tsx`) injects the Google website-translate widget for on-the-fly localization — there is no i18n message catalog.
 
 ### Backend (`backend/api/` — a single Django app)
 - All content models extend `TimeStampedModel` in `api/models.py`. Most are exposed as DRF `ModelViewSet`s registered on a `DefaultRouter` in `api/urls.py`.

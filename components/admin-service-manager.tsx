@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
   normalizeServiceRecord,
@@ -92,6 +95,7 @@ export function AdminServiceManager() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const loadItems = useCallback(async () => {
@@ -180,16 +184,10 @@ export function AdminServiceManager() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add Service"}
+            Add Service
           </button>
         </div>
       </div>
@@ -207,9 +205,15 @@ export function AdminServiceManager() {
       ) : null}
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Service" : "Add Service"}
+          onClose={() => {
+            resetForm();
+            setFormOpen(false);
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onSubmit={async (event) => {
             event.preventDefault();
             setSaving(true);
@@ -248,14 +252,12 @@ export function AdminServiceManager() {
               }
 
               await loadItems();
+              const isEditing = editingId !== null;
               resetForm();
-              if (editingId !== null) {
-                setFormOpen(false);
-                setSuccess("Service record updated.");
-              } else {
-                setFormOpen(true);
-                setSuccess("Service record added.");
-              }
+              setFormOpen(false);
+              const savedText = isEditing ? "Service record updated." : "Service record added.";
+              setSuccess(savedText);
+              setSavedMessage(savedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error
@@ -373,17 +375,6 @@ export function AdminServiceManager() {
 
             <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  setFormOpen(false);
-                  setError("");
-                }}
-                className="admin-master-btn admin-master-btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
                 type="submit"
                 className="admin-master-btn admin-master-btn-primary"
                 disabled={saving}
@@ -393,6 +384,7 @@ export function AdminServiceManager() {
             </div>
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <div className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-white/92 p-4 shadow-[0_18px_40px_rgba(18,31,69,0.05)]">
@@ -436,16 +428,15 @@ export function AdminServiceManager() {
                       </span>
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-2 text-sm text-slate-600">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <AdminIconButton
+                          variant="edit"
                           onClick={() => openEditForm(item)}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                          label="Edit service"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete service"
                           onClick={async () => {
                             if (typeof item.id !== "number") {
                               return;
@@ -480,10 +471,7 @@ export function AdminServiceManager() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -499,6 +487,10 @@ export function AdminServiceManager() {
           </table>
         </div>
       </div>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }

@@ -23,8 +23,7 @@ export const defaultOrganizationProfile: OrganizationProfile = {
   email: "secretariat@knba.org.np",
   logo: "",
   logo_url: "",
-  map_embed_url:
-    "https://www.google.com/maps?q=Khichapokhari%20New%20Road%20Kathmandu&output=embed",
+  map_embed_url: "",
   is_active: true,
 };
 
@@ -48,11 +47,15 @@ export function resolveOrganizationImageSrc(src: string) {
   return `${MEDIA_BASE_URL}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
+// Returns the embeddable map URL taken ONLY from the organization profile
+// setting. Accepts a full Google Maps `<iframe ... src="...">` snippet or a
+// bare https URL. Returns "" when nothing valid is configured (no hardcoded
+// fallback map).
 export function resolveOrganizationMapEmbedSrc(value: string) {
   const rawValue = value.trim();
 
   if (!rawValue) {
-    return defaultOrganizationProfile.map_embed_url;
+    return "";
   }
 
   const iframeSrcMatch = rawValue.match(/src=["']([^"']+)["']/i);
@@ -64,5 +67,5 @@ export function resolveOrganizationMapEmbedSrc(value: string) {
     return rawValue;
   }
 
-  return defaultOrganizationProfile.map_embed_url;
+  return "";
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { NepalFlagIcon } from "@/components/nepal-flag-icon";
 import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { API_BASE_URL, MEDIA_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
-  focusFirstFormField,
   moveToNextFormField,
   preventMouseOnlyUploadKeyboard,
   resetEnterNavigationState,
@@ -136,6 +138,7 @@ export function AdminOrganizationProfileCard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const formRef = useRef<HTMLFormElement | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
@@ -245,16 +248,10 @@ export function AdminOrganizationProfileCard() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add Profile"}
+            Add Profile
           </button>
         </div>
       </div>
@@ -272,9 +269,15 @@ export function AdminOrganizationProfileCard() {
       ) : null}
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Profile" : "Add Profile"}
+          onClose={() => {
+            resetForm();
+            setFormOpen(false);
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -338,17 +341,12 @@ export function AdminOrganizationProfileCard() {
               await loadProfiles();
               await refreshProfile();
               resetForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-              }
-              setSuccess(
-                isEditing
-                  ? "Organization profile updated successfully."
-                  : "Organization profile added successfully.",
-              );
+              setFormOpen(false);
+              const savedText = isEditing
+                ? "Organization profile updated successfully."
+                : "Organization profile added successfully.";
+              setSuccess(savedText);
+              setSavedMessage(savedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error
@@ -455,19 +453,24 @@ export function AdminOrganizationProfileCard() {
                 />
               </label>
               <label className="admin-master-label w-full max-w-[22rem]">
-                <span>Map Url</span>
-                <input
-                  type="text"
+                <span>Map Embed (iframe or URL)</span>
+                <textarea
                   value={form.map_embed_url}
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,
                       map_embed_url: event.target.value,
                     }))
-                }
-                className="admin-master-input"
-              />
-            </label>
+                  }
+                  className="admin-master-textarea"
+                  rows={3}
+                  placeholder={'Paste the Google Maps "Embed a map" code, e.g. <iframe src="https://www.google.com/maps/embed?..."></iframe>'}
+                />
+                <span className="mt-1 text-[0.6rem] font-medium text-slate-600">
+                  Paste the full &lt;iframe&gt; embed code from Google Maps — the map link is read
+                  from it automatically. A plain embed URL also works.
+                </span>
+              </label>
               <label className="admin-master-label w-full max-w-[22rem] md:col-start-1">
                 <span>Logo</span>
                 <div className="flex min-h-[4rem] w-[52%] min-w-[12.5rem] items-center justify-between gap-3 rounded-[1rem] border border-dashed border-[rgba(39,60,117,0.18)] bg-white/80 px-3 py-2">
@@ -550,6 +553,7 @@ export function AdminOrganizationProfileCard() {
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <section className="admin-card rounded-[1.2rem] p-5 md:p-6">
@@ -648,15 +652,14 @@ export function AdminOrganizationProfileCard() {
                             Set Active
                           </button>
                         ) : null}
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
                           onClick={() => openEditForm(profile)}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                          label="Edit profile"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete profile"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -686,10 +689,7 @@ export function AdminOrganizationProfileCard() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -709,6 +709,10 @@ export function AdminOrganizationProfileCard() {
           </table>
         </div>
       </section>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }

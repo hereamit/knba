@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { NepalFlagIcon } from "@/components/nepal-flag-icon";
 import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
-  focusFirstFormField,
   moveToNextFormField,
   resetEnterNavigationState,
 } from "@/lib/enter-navigation";
@@ -110,6 +112,7 @@ export function AdminGeneralMemberManager() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -235,16 +238,10 @@ export function AdminGeneralMemberManager() {
           </h2>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add General Member"}
+            Add General Member
           </button>
         </div>
       </div>
@@ -262,9 +259,15 @@ export function AdminGeneralMemberManager() {
       ) : null}
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit General Member" : "Add General Member"}
+          onClose={() => {
+            setFormOpen(false);
+            resetForm();
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -316,12 +319,12 @@ export function AdminGeneralMemberManager() {
               await loadItems();
               const isEditing = editingId !== null;
               resetForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-              }
-              setSuccess(isEditing ? "General member updated." : "General member added.");
+              setFormOpen(false);
+              const savedText = isEditing
+                ? "General member updated."
+                : "General member added.";
+              setSuccess(savedText);
+              setSavedMessage(savedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error ? requestError.message : "Unable to save general member.",
@@ -505,6 +508,7 @@ export function AdminGeneralMemberManager() {
             {success ? <p className="mt-2 text-right text-[0.72rem] font-medium text-emerald-700">{success}</p> : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <section className="admin-card rounded-[1.2rem] p-5 md:p-6">
@@ -559,11 +563,14 @@ export function AdminGeneralMemberManager() {
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => openEditForm(item)} className="admin-table-btn admin-table-btn-edit">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
+                          onClick={() => openEditForm(item)}
+                          label="Edit general member"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete general member"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -589,10 +596,7 @@ export function AdminGeneralMemberManager() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -610,6 +614,10 @@ export function AdminGeneralMemberManager() {
           </table>
         </div>
       </section>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }
