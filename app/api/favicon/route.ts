@@ -1,6 +1,8 @@
+import { API_BASE_URL } from "@/lib/api";
+
 export const dynamic = "force-dynamic";
 
-const ORGANIZATION_PROFILE_URL = "http://127.0.0.1:8000/api/organization-profiles/current/";
+const ORGANIZATION_PROFILE_URL = `${API_BASE_URL}/organization-profiles/current/`;
 
 type OrganizationProfileResponse = {
   logo?: string | null;

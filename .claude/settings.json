@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/Scripts/python.exe manage.py makemigrations api -v 2)",
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://127.0.0.1:8000/api/about-page/)",
+      "Bash(curl -s http://127.0.0.1:8000/api/about-page/)",
+      "Bash(./venv/Scripts/python.exe manage.py showmigrations api)",
+      "Bash(./venv/Scripts/python.exe manage.py migrate api)",
+      "Bash(./venv/Scripts/python.exe manage.py dbshell -- -c \"\\\\d api_sitesettings\")",
+      "Bash(./venv/Scripts/python.exe manage.py shell -c \"from django.db import connection; cur = connection.cursor\\(\\); cur.execute\\('ALTER TABLE api_sitesettings ADD COLUMN IF NOT EXISTS member_submissions_open boolean NOT NULL DEFAULT false'\\); print\\('column added'\\)\")"
+    ]
+  }
+}
