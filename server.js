@@ -1,17 +1,17 @@
 const http = require("http");
 const next = require("next");
 
-// This entrypoint is ONLY used in production (cPanel / Passenger / LiteSpeed Node).
-// Local development should use `npm run dev` instead.
-const dev = false;
+const dev = process.env.NODE_ENV !== "production";
+const hostname = process.env.HOST || "0.0.0.0";
+const port = parseInt(process.env.PORT || "3000", 10);
 
-const app = next({ dev });
+const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   http
     .createServer((req, res) => handle(req, res))
-    .listen(() => {
-      console.log("KNBA frontend ready");
+    .listen(port, hostname, () => {
+      console.log(`KNBA frontend running at http://${hostname}:${port}`);
     });
 });

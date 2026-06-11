@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { NepalFlagIcon } from "@/components/nepal-flag-icon";
 import { API_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
 import {
-  focusFirstFormField,
   moveToNextFormField,
   preventMouseOnlyUploadKeyboard,
   resetEnterNavigationState,
@@ -16,7 +18,6 @@ import {
   type MemberRecord,
   type MemberTermRecord,
 } from "@/lib/members";
-import { findMemberRole, memberRoleOptions } from "@/lib/member-roles";
 
 type MemberTermFormState = {
   label: string;
@@ -147,6 +148,7 @@ export function AdminMemberManager({
   const [termSaving, setTermSaving] = useState(false);
   const [termError, setTermError] = useState("");
   const [termSuccess, setTermSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
 
   const [items, setItems] = useState<MemberRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -314,15 +316,8 @@ export function AdminMemberManager({
     };
 
     void run();
-    const onFocus = () => {
-      if (selectedTermId) {
-        void loadMembers(selectedTermId);
-      }
-    };
-    window.addEventListener("focus", onFocus);
     return () => {
       isCancelled = true;
-      window.removeEventListener("focus", onFocus);
     };
   }, [selectedTermId, loadMembers]);
 
@@ -450,16 +445,10 @@ export function AdminMemberManager({
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (termFormOpen && editingTermId === null) {
-                setTermFormOpen(false);
-                return;
-              }
-              openCreateTermForm();
-            }}
+            onClick={openCreateTermForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {termFormOpen && editingTermId === null ? "Close Form" : "Add Term"}
+            Add Term
           </button>
         </div>
       </div>
@@ -478,9 +467,16 @@ export function AdminMemberManager({
       ) : null}
 
       {showTermsSection && termFormOpen ? (
+        <AdminFormModal
+          title={editingTermId ? "Edit Term" : "Add Term"}
+          onClose={() => {
+            setTermFormOpen(false);
+            resetTermForm();
+          }}
+          maxWidthClass="max-w-2xl"
+        >
         <form
           ref={termFormRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -524,13 +520,10 @@ export function AdminMemberManager({
 
               await loadTerms();
               resetTermForm();
-              if (isEditing) {
-                setTermFormOpen(false);
-              } else {
-                setTermFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(termFormRef.current));
-              }
-              setTermSuccess(isEditing ? "Term updated." : "Term added.");
+              setTermFormOpen(false);
+              const termSavedText = isEditing ? "Term updated." : "Term added.";
+              setTermSuccess(termSavedText);
+              setSavedMessage(termSavedText);
             } catch (requestError) {
               setTermError(
                 requestError instanceof Error ? requestError.message : "Unable to save member term.",
@@ -642,6 +635,7 @@ export function AdminMemberManager({
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       {showTermsSection ? (
@@ -655,14 +649,13 @@ export function AdminMemberManager({
                 <th>Members</th>
                 <th>Current</th>
                 <th>Status</th>
-                <th>Order</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {termLoading ? (
                 <tr>
-                  <td colSpan={7} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={6} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     Loading member terms...
                   </td>
                 </tr>
@@ -688,7 +681,6 @@ export function AdminMemberManager({
                         {term.is_active ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{term.display_order}</td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
                         <button type="button" onClick={() => setSelectedTermId(term.id ?? null)} className="admin-table-btn admin-table-btn-edit">
@@ -721,11 +713,14 @@ export function AdminMemberManager({
                             Current
                           </button>
                         ) : null}
-                        <button type="button" onClick={() => openEditTermForm(term)} className="admin-table-btn admin-table-btn-edit">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
+                          onClick={() => openEditTermForm(term)}
+                          label="Edit term"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete term"
                           onClick={async () => {
                             setTermError("");
                             setTermSuccess("");
@@ -748,17 +743,14 @@ export function AdminMemberManager({
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={6} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     No term found yet. Use the Add Term button to create one first.
                   </td>
                 </tr>
@@ -804,17 +796,11 @@ export function AdminMemberManager({
             </label>
             <button
               type="button"
-              onClick={() => {
-                if (formOpen && editingId === null) {
-                  setFormOpen(false);
-                  return;
-                }
-                openCreateMemberForm();
-              }}
+              onClick={openCreateMemberForm}
               className="admin-master-btn admin-master-btn-primary"
               disabled={!selectedTermId}
             >
-              {formOpen && editingId === null ? "Close Form" : "Add Member"}
+              Add Member
             </button>
           </div>
         </div>
@@ -834,9 +820,16 @@ export function AdminMemberManager({
       ) : null}
 
       {showMembersSection && formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Member" : "Add Member"}
+          subtitle={selectedTerm ? selectedTerm.label : undefined}
+          onClose={() => {
+            setFormOpen(false);
+            resetMemberForm();
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -855,35 +848,15 @@ export function AdminMemberManager({
                 throw new Error("Enter exactly 10 digits after +977.");
               }
 
-              const roleMeta = findMemberRole(form.role);
-              let effectiveDisplayOrder = form.display_order || "0";
-              if (roleMeta?.display_order != null) {
-                effectiveDisplayOrder = String(roleMeta.display_order);
-              } else if (
-                roleMeta?.display_order === null &&
-                (!form.display_order || Number(form.display_order) <= 0)
-              ) {
-                const maxInCategory = items
-                  .filter((item) => item.category === (roleMeta?.category ?? form.category))
-                  .reduce(
-                    (acc, item) => (item.display_order > acc ? item.display_order : acc),
-                    0,
-                  );
-                effectiveDisplayOrder = String(maxInCategory + 1);
-              }
-
               const payload = new FormData();
               payload.append("term", form.term);
               payload.append("name", form.name);
-              payload.append(
-                "category",
-                roleMeta ? roleMeta.category : form.category,
-              );
+              payload.append("category", form.category);
               payload.append("role", form.role);
               payload.append("phone", `${NEPAL_COUNTRY_CODE}-${form.phone}`);
               payload.append("email", form.email);
               payload.append("note", form.note);
-              payload.append("display_order", effectiveDisplayOrder);
+              payload.append("display_order", form.display_order || "0");
               payload.append("is_active", String(form.is_active));
 
               if (photoFile) {
@@ -915,13 +888,12 @@ export function AdminMemberManager({
 
               await loadMembers(Number(form.term));
               resetMemberForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-              }
-              setSuccess(isEditing ? "Member record updated." : "Member record added.");
+              setFormOpen(false);
+              const memberSavedText = isEditing
+                ? "Member record updated."
+                : "Member record added.";
+              setSuccess(memberSavedText);
+              setSavedMessage(memberSavedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error ? requestError.message : "Unable to save member record.",
@@ -955,31 +927,21 @@ export function AdminMemberManager({
                 </div>
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
-                <span>Role</span>
+                <span>Section</span>
                 <div className="relative">
                   <select
-                    value={form.role}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      const meta = findMemberRole(value);
-                      setForm((current) => ({
-                        ...current,
-                        role: value,
-                        category: meta ? meta.category : current.category,
-                      }));
-                    }}
+                    value={form.category}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, category: event.target.value }))
+                    }
                     className="admin-master-input appearance-none pr-14"
                     required
                   >
-                    <option value="">Select role</option>
-                    {memberRoleOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
+                    {categoryOptions.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
                       </option>
                     ))}
-                    {form.role && !findMemberRole(form.role) ? (
-                      <option value={form.role}>{form.role} (custom)</option>
-                    ) : null}
                   </select>
                   <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
                 </div>
@@ -997,23 +959,34 @@ export function AdminMemberManager({
                 />
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
-                <span>Section (auto from role)</span>
-                <div className="relative">
-                  <select
-                    value={form.category}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, category: event.target.value }))
-                    }
-                    className="admin-master-input appearance-none pr-14"
-                    required
+                <span>Role</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <select
+                      value={form.role}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, role: event.target.value }))
+                      }
+                      className="admin-master-input appearance-none pr-14"
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      {roleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addRoleOption}
+                    className="admin-master-btn admin-master-btn-primary min-h-[1.8rem] w-[1.8rem] shrink-0 px-0 py-0 text-[0.82rem] font-medium"
+                    aria-label="Add role"
                   >
-                    {categoryOptions.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="admin-select-arrow pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500" />
+                    +
+                  </button>
                 </div>
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
@@ -1061,7 +1034,7 @@ export function AdminMemberManager({
                 />
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
-                <span>Display Order (auto if blank)</span>
+                <span>Display Order</span>
                 <input
                   type="number"
                   min="0"
@@ -1070,7 +1043,7 @@ export function AdminMemberManager({
                     setForm((current) => ({ ...current, display_order: event.target.value }))
                   }
                   className="admin-master-input"
-                  placeholder="Leave blank to use role's default"
+                  required
                 />
               </label>
               <label className="admin-master-label w-full max-w-[25rem] md:col-span-2">
@@ -1166,6 +1139,7 @@ export function AdminMemberManager({
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       {showMembersSection ? (
@@ -1195,12 +1169,10 @@ export function AdminMemberManager({
               <tr className="text-left">
                 <th>Photo</th>
                 <th>Name</th>
-                <th>Term</th>
                 <th>Section</th>
                 <th>Role</th>
                 <th>Phone</th>
                 <th>Email</th>
-                <th>Order</th>
                 <th>Status</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -1208,7 +1180,7 @@ export function AdminMemberManager({
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={8} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     Loading member records...
                   </td>
                 </tr>
@@ -1227,12 +1199,10 @@ export function AdminMemberManager({
                       )}
                     </td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-700">{item.name}</td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.term_label}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.category_label || item.category}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.role}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{formatNepalPhone(item.phone)}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.email}</td>
-                    <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">{item.display_order}</td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm">
                       <span className={`admin-badge ${item.is_active ? "admin-badge-active" : "admin-badge-inactive"}`}>
                         {item.is_active ? "Active" : "Inactive"}
@@ -1240,11 +1210,14 @@ export function AdminMemberManager({
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => openEditForm(item)} className="admin-table-btn admin-table-btn-edit">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
+                          onClick={() => openEditForm(item)}
+                          label="Edit member"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete member"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -1268,17 +1241,14 @@ export function AdminMemberManager({
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                  <td colSpan={8} className="rounded-[0.9rem] bg-slate-50 px-3 py-3 text-sm text-slate-500">
                     {selectedTerm
                       ? items.length
                         ? "No member record matched your search."
@@ -1291,6 +1261,10 @@ export function AdminMemberManager({
           </table>
         </div>
       </section>
+      ) : null}
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
       ) : null}
     </section>
   );

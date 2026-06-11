@@ -1,10 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin-form-modal";
+import { AdminSavedModal } from "@/components/admin-saved-modal";
+import { AdminIconButton } from "@/components/admin-table-icons";
 import { API_BASE_URL, MEDIA_BASE_URL, getValidAdminAccessToken } from "@/lib/api";
-import { NepalFlagIcon } from "@/components/nepal-flag-icon";
+import { PhoneNumbersInput } from "@/components/phone-numbers-input";
 import {
-  focusFirstFormField,
+  ensurePhoneEntries,
+  parsePhoneEntries,
+  summarizePhoneEntries,
+  type PhoneEntry,
+} from "@/lib/phone";
+import {
   moveToNextFormField,
   preventMouseOnlyUploadKeyboard,
   resetEnterNavigationState,
@@ -61,7 +69,7 @@ type BusinessShowcaseFormState = {
   name: string;
   category: string;
   description: string;
-  phone: string;
+  phoneEntries: PhoneEntry[];
   address: string;
   badge: string;
   website_url: string;
@@ -73,40 +81,25 @@ type BusinessShowcaseFormState = {
   is_active: boolean;
 };
 
-const emptyForm: BusinessShowcaseFormState = {
-  name: "",
-  category: "",
-  description: "",
-  phone: "",
-  address: "",
-  badge: "Business Showcase",
-  website_url: "",
-  facebook_url: "",
-  instagram_url: "",
-  ecommerce_url: "",
-  is_featured: false,
-  display_order: "1",
-  is_active: true,
-};
+function createEmptyForm(): BusinessShowcaseFormState {
+  return {
+    name: "",
+    category: "",
+    description: "",
+    phoneEntries: ensurePhoneEntries([]),
+    address: "",
+    badge: "Business Showcase",
+    website_url: "",
+    facebook_url: "",
+    instagram_url: "",
+    ecommerce_url: "",
+    is_featured: false,
+    display_order: "1",
+    is_active: true,
+  };
+}
 
 const badgeOptions = ["Featured Sponsor", "Member Business", "Business Showcase"];
-const NEPAL_COUNTRY_CODE = "+977";
-
-function getLocalNepalPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  if (digits.startsWith("977") && digits.length >= 13) {
-    return digits.slice(3, 13);
-  }
-  if (digits.startsWith("0") && digits.length >= 11) {
-    return digits.slice(1, 11);
-  }
-  return digits.slice(0, 10);
-}
-
-function formatNepalPhone(value: string) {
-  const localNumber = getLocalNepalPhone(value);
-  return localNumber ? `${NEPAL_COUNTRY_CODE}-${localNumber}` : "";
-}
 
 async function getAuthHeaders() {
   const accessToken = await getValidAdminAccessToken();
@@ -249,7 +242,7 @@ export function AdminBusinessShowcaseManager() {
   const [items, setItems] = useState<BusinessShowcaseRecord[]>([]);
   const [submissions, setSubmissions] = useState<BusinessShowcaseSubmissionRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [form, setForm] = useState<BusinessShowcaseFormState>(emptyForm);
+  const [form, setForm] = useState<BusinessShowcaseFormState>(createEmptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -263,6 +256,7 @@ export function AdminBusinessShowcaseManager() {
   const [error, setError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const [success, setSuccess] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const formRef = useRef<HTMLFormElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -426,7 +420,7 @@ export function AdminBusinessShowcaseManager() {
   }, [editingId, form.category, formOpen, getNextCategoryOrder]);
 
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm(createEmptyForm());
     setEditingId(null);
     setImageFile(null);
     setImageMarkedForRemoval(false);
@@ -445,7 +439,7 @@ export function AdminBusinessShowcaseManager() {
       name: item.name,
       category: item.category,
       description: item.description,
-      phone: getLocalNepalPhone(item.phone),
+      phoneEntries: ensurePhoneEntries(parsePhoneEntries(item.phone)),
       address: item.address,
       badge: item.badge,
       website_url: item.website_url,
@@ -586,16 +580,10 @@ export function AdminBusinessShowcaseManager() {
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (formOpen && editingId === null) {
-                setFormOpen(false);
-                return;
-              }
-              openCreateForm();
-            }}
+            onClick={openCreateForm}
             className="admin-master-btn admin-master-btn-primary"
           >
-            {formOpen && editingId === null ? "Close Form" : "Add Business"}
+            Add Business
           </button>
         </div>
       </div>
@@ -667,7 +655,7 @@ export function AdminBusinessShowcaseManager() {
                         <div>
                           <p className="text-lg font-semibold text-slate-800">{submission.name}</p>
                           <p className="text-sm text-slate-500">
-                            {submission.category} • {formatNepalPhone(submission.phone)}
+                            {submission.category} • {submission.phone}
                           </p>
                         </div>
                         <p className="text-sm leading-6 text-slate-600">{submission.description}</p>
@@ -723,9 +711,15 @@ export function AdminBusinessShowcaseManager() {
       </section>
 
       {formOpen ? (
+        <AdminFormModal
+          title={editingId ? "Edit Business" : "Add Business"}
+          onClose={() => {
+            resetForm();
+            setFormOpen(false);
+          }}
+        >
         <form
           ref={formRef}
-          className="rounded-[1.2rem] border border-[rgba(39,60,117,0.12)] bg-[linear-gradient(180deg,#dbe7ff_0%,#c9d9fb_100%)] p-4 shadow-[0_18px_40px_rgba(18,31,69,0.06)] md:p-5"
           onKeyDown={moveToNextFormField}
           onBlurCapture={resetEnterNavigationState}
           onSubmit={async (event) => {
@@ -736,16 +730,18 @@ export function AdminBusinessShowcaseManager() {
 
             try {
               const isEditing = editingId !== null;
-              if (form.phone.length !== 10) {
-                setPhoneError("Enter exactly 10 digits after +977.");
-                throw new Error("Enter exactly 10 digits after +977.");
+              const phoneSummary = summarizePhoneEntries(form.phoneEntries);
+              if (phoneSummary.error) {
+                setPhoneError(phoneSummary.error);
+                throw new Error(phoneSummary.error);
               }
+              setPhoneError("");
 
               const payload = new FormData();
               payload.append("name", form.name);
               payload.append("category", form.category);
               payload.append("description", form.description);
-              payload.append("phone", `${NEPAL_COUNTRY_CODE}-${form.phone}`);
+              payload.append("phone", phoneSummary.value);
               payload.append("address", form.address);
               payload.append("badge", form.badge);
               payload.append("website_url", form.website_url);
@@ -790,13 +786,12 @@ export function AdminBusinessShowcaseManager() {
 
               await loadItems();
               resetForm();
-              if (isEditing) {
-                setFormOpen(false);
-              } else {
-                setFormOpen(true);
-                requestAnimationFrame(() => focusFirstFormField(formRef.current));
-              }
-              setSuccess(isEditing ? "Business listing updated." : "Business listing added.");
+              setFormOpen(false);
+              const savedText = isEditing
+                ? "Business listing updated."
+                : "Business listing added.";
+              setSuccess(savedText);
+              setSavedMessage(savedText);
             } catch (requestError) {
               setError(
                 requestError instanceof Error
@@ -866,35 +861,17 @@ export function AdminBusinessShowcaseManager() {
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
                 <span>Phone</span>
-                <div className="flex items-center overflow-hidden rounded-[0.9rem] border border-[rgba(39,60,117,0.12)] bg-white">
-                  <span className="flex min-h-[1.8rem] items-center border-r border-[rgba(39,60,117,0.1)] px-3 leading-none">
-                    <NepalFlagIcon className="h-4 w-4" />
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={10}
-                    value={form.phone}
-                    onChange={(event) => {
-                      const digitsOnly = event.target.value.replace(/\D/g, "");
-                      if (digitsOnly.length > 10) {
-                        setPhoneError("Only 10 digits are allowed after +977.");
-                        return;
-                      }
-                      setPhoneError(
-                        digitsOnly.length > 0 && digitsOnly.length < 10
-                          ? "Enter exactly 10 digits after +977."
-                          : "",
-                      );
-                      setForm((current) => ({ ...current, phone: digitsOnly }));
-                    }}
-                    className="admin-master-input rounded-none border-0 shadow-none focus:shadow-none"
-                    required
-                  />
-                </div>
-                {phoneError ? (
-                  <p className="mt-1 text-[0.68rem] font-medium text-rose-700">{phoneError}</p>
-                ) : null}
+                <PhoneNumbersInput
+                  entries={form.phoneEntries}
+                  onChange={(phoneEntries) => {
+                    setForm((current) => ({ ...current, phoneEntries }));
+                    if (phoneError) {
+                      setPhoneError("");
+                    }
+                  }}
+                  tone="admin"
+                  error={phoneError}
+                />
               </label>
               <label className="admin-master-label w-full max-w-[25rem]">
                 <span>Address</span>
@@ -1079,6 +1056,7 @@ export function AdminBusinessShowcaseManager() {
             ) : null}
           </div>
         </form>
+        </AdminFormModal>
       ) : null}
 
       <section className="admin-card rounded-[1.2rem] p-5 md:p-6">
@@ -1146,7 +1124,7 @@ export function AdminBusinessShowcaseManager() {
                       {item.category}
                     </td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">
-                      {formatNepalPhone(item.phone)}
+                      {item.phone}
                     </td>
                     <td className="bg-slate-50/90 px-3 py-1.5 text-sm text-slate-600">
                       {item.badge}
@@ -1168,15 +1146,14 @@ export function AdminBusinessShowcaseManager() {
                     </td>
                     <td className="rounded-r-[0.9rem] bg-slate-50/90 px-3 py-1.5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
+                        <AdminIconButton
+                          variant="edit"
                           onClick={() => openEditForm(item)}
-                          className="admin-table-btn admin-table-btn-edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
+                          label="Edit business"
+                        />
+                        <AdminIconButton
+                          variant="delete"
+                          label="Delete business"
                           onClick={async () => {
                             setError("");
                             setSuccess("");
@@ -1205,10 +1182,7 @@ export function AdminBusinessShowcaseManager() {
                               );
                             }
                           }}
-                          className="admin-table-btn admin-table-btn-delete"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -1229,6 +1203,10 @@ export function AdminBusinessShowcaseManager() {
           </table>
         </div>
       </section>
+
+      {savedMessage ? (
+        <AdminSavedModal message={savedMessage} onClose={() => setSavedMessage("")} />
+      ) : null}
     </section>
   );
 }

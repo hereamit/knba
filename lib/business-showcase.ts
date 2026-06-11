@@ -1,3 +1,7 @@
+import {
+  businessShowcaseItems as fallbackBusinessShowcaseItems,
+  type BusinessShowcaseItem as FallbackBusinessShowcaseItem,
+} from "@/lib/site-data";
 import { MEDIA_BASE_URL } from "@/lib/api";
 
 export type BusinessShowcaseRecord = {
@@ -63,6 +67,26 @@ export function normalizeBusinessShowcaseRecord(
   };
 }
 
+function mapFallbackSocialLinks(
+  links: FallbackBusinessShowcaseItem["socialLinks"],
+  ecommerceUrl?: string,
+) {
+  const baseLinks = links ?? [];
+  const mappedLinks = baseLinks.map((link) => ({
+    label: link.label,
+    href: link.href,
+  }));
+
+  if (ecommerceUrl) {
+    mappedLinks.push({
+      label: "Shop",
+      href: ecommerceUrl,
+    });
+  }
+
+  return mappedLinks;
+}
+
 export function mapBusinessShowcaseRecordToCard(record: BusinessShowcaseRecord) {
   const socialLinks = [
     ...(record.facebook_url
@@ -88,3 +112,33 @@ export function mapBusinessShowcaseRecordToCard(record: BusinessShowcaseRecord) 
   };
 }
 
+export const fallbackBusinessShowcaseRecords: BusinessShowcaseRecord[] =
+  fallbackBusinessShowcaseItems.map((item, index) => ({
+    id: index + 1,
+    name: item.name,
+    category: item.category,
+    description: item.description,
+    phone: item.phone,
+    address: item.address,
+    image_src: item.image,
+    badge: item.badge,
+    website_url: item.websiteUrl ?? "",
+    facebook_url:
+      item.socialLinks?.find((link) => link.label.toLowerCase() === "facebook")?.href ?? "",
+    instagram_url:
+      item.socialLinks?.find((link) => link.label.toLowerCase() === "instagram")?.href ?? "",
+    ecommerce_url:
+      item.socialLinks?.find((link) => link.label.toLowerCase() === "shop")?.href ?? "",
+    is_featured: Boolean(item.featured),
+    display_order: index + 1,
+    is_active: true,
+    created_at: "",
+  }));
+
+export const fallbackBusinessShowcaseCards = fallbackBusinessShowcaseItems.map((item) => ({
+  ...item,
+  socialLinks: mapFallbackSocialLinks(
+    item.socialLinks,
+    item.socialLinks?.find((link) => link.label.toLowerCase() === "shop")?.href,
+  ),
+}));

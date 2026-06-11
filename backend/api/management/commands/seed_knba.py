@@ -249,7 +249,6 @@ class Command(BaseCommand):
                 "/hero/new-road-1.jpg",
                 1,
                 True,
-                True,
             ),
             (
                 "Community Outreach Program",
@@ -257,7 +256,6 @@ class Command(BaseCommand):
                 "A collaborative outreach initiative focused on cleanliness and neighborhood engagement.",
                 "/hero/asan-market.jpg",
                 2,
-                True,
                 True,
             ),
             (
@@ -267,7 +265,6 @@ class Command(BaseCommand):
                 "/photos/kathmandu-market.jpg",
                 3,
                 True,
-                True,
             ),
             (
                 "Festival Street Illumination",
@@ -275,7 +272,6 @@ class Command(BaseCommand):
                 "Seasonal decorations and collective preparations in New Road.",
                 "/hero/new-road-gate.jpg",
                 4,
-                True,
                 True,
             ),
             (
@@ -285,7 +281,6 @@ class Command(BaseCommand):
                 "/photos/asan-tole.jpg",
                 5,
                 True,
-                True,
             ),
             (
                 "New Road Heritage Walk",
@@ -293,7 +288,6 @@ class Command(BaseCommand):
                 "An activity connecting commerce, local culture, and neighborhood identity.",
                 "/photos/new-road-2.jpg",
                 6,
-                False,
                 False,
             ),
         ]
@@ -304,7 +298,6 @@ class Command(BaseCommand):
             image_url,
             display_order,
             is_featured,
-            show_in_slider,
         ) in gallery_items:
             GalleryItem.objects.update_or_create(
                 title=title,
@@ -313,7 +306,6 @@ class Command(BaseCommand):
                     "description": description,
                     "image_url": image_url,
                     "is_featured": is_featured,
-                    "show_in_slider": show_in_slider,
                     "display_order": display_order,
                     "is_active": True,
                 },

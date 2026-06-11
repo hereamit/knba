@@ -22,7 +22,7 @@ export function SiteFooter() {
               </div>
             ) : (
               <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[1.2rem] bg-[linear-gradient(135deg,#273c75,#1e3799)] text-xl font-black text-white">
-                profile.short_name.slice(0, 1)
+                {profile.short_name.slice(0, 1)}
               </div>
             )}
             <h2 className="display-font max-w-sm text-2xl font-semibold">

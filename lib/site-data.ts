@@ -31,7 +31,6 @@ export type HeroSlide = {
   secondaryHref: string;
 };
 
-
 export const homeStats = [
   {
     value: "325+",
@@ -185,63 +184,95 @@ export type BusinessShowcaseItem = {
   featured?: boolean;
 };
 
-
-export type GalleryItem = {
-  src: string;
-  title: string;
-  category: string;
-  description: string;
-};
-
-export const galleryItems: GalleryItem[] = [
+export const businessShowcaseItems: BusinessShowcaseItem[] = [
   {
-    src: "/hero/new-road-1.jpg",
-    title: "Market Coordination Meeting",
-    category: "Meetings",
+    name: "New Road Fashion House",
+    category: "Retail Apparel",
     description:
-      "Association leaders and member businesses reviewing market operations, shared concerns, and upcoming activities.",
+      "A busy New Road clothing store offering seasonal collections, wholesale support, and festival promotions for local shoppers.",
+    phone: "+977-9801200101",
+    address: "Khichapokhari, New Road, Kathmandu",
+    image: "/business/fashion-house.jpg",
+    badge: "Featured Sponsor",
+    websiteUrl: "https://newroadfashion.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/newroadfashionhouse" },
+      { label: "Instagram", href: "https://instagram.com/newroadfashionhouse" },
+    ],
+    featured: true,
   },
   {
-    src: "/hero/asan-market.jpg",
-    title: "Community Outreach Program",
-    category: "Community",
+    name: "Kathmandu Digital Traders",
+    category: "Electronics",
     description:
-      "A collaborative outreach initiative focused on improving coordination, cleanliness, and neighborhood engagement.",
+      "A member business focused on mobile accessories, gadgets, and after-sales support with competitive city-center pricing.",
+    phone: "+977-9801200102",
+    address: "Bishal Bazaar Side, New Road, Kathmandu",
+    image: "/business/digital-traders.jpg",
+    badge: "Business Showcase",
+    websiteUrl: "https://kathmandudigital.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/kathmandudigitaltraders" },
+    ],
   },
   {
-    src: "/photos/kathmandu-market.jpg",
-    title: "Business Capacity Workshop",
-    category: "Training",
+    name: "Milan Jewellery Center",
+    category: "Jewellery & Accessories",
     description:
-      "Training session for members on practical business topics, service quality, and digital adaptation.",
+      "Trusted local jewellery and gift retailer serving walk-in customers and repeat family shoppers from across Kathmandu.",
+    phone: "+977-9801200103",
+    address: "Khichapokhari Chowk, Kathmandu",
+    image: "/business/jewellery-center.jpg",
+    badge: "Member Business",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/milanjewellerycenter" },
+      { label: "Instagram", href: "https://instagram.com/milanjewellerycenter" },
+    ],
   },
   {
-    src: "/hero/new-road-gate.jpg",
-    title: "Festival Street Illumination",
-    category: "Events",
+    name: "Himal Trade Suppliers",
+    category: "Wholesale Supply",
     description:
-      "Seasonal decorations and collective preparations that strengthen the festive market atmosphere in New Road.",
+      "A wholesale trading business connecting merchants with packaging materials, shop supplies, and fast restocking support.",
+    phone: "+977-9801200104",
+    address: "New Road Core Market, Kathmandu",
+    image: "/business/trade-suppliers.jpg",
+    badge: "Featured Sponsor",
+    websiteUrl: "https://himaltrade.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/himaltradesuppliers" },
+      { label: "Shop", href: "https://shop.himaltrade.example.com" },
+    ],
+    featured: true,
   },
   {
-    src: "/photos/asan-tole.jpg",
-    title: "Stakeholder Partnership Session",
-    category: "Meetings",
+    name: "Bagmati Footwear Point",
+    category: "Footwear",
     description:
-      "Discussion with external stakeholders and local authorities to improve business services and market facilities.",
+      "A showroom-style footwear outlet with casual, formal, and seasonal inventory for daily retail and festive demand.",
+    phone: "+977-9801200105",
+    address: "Near Juddha Salik, New Road, Kathmandu",
+    image: "/business/footwear-point.jpg",
+    badge: "Business Showcase",
+    websiteUrl: "https://bagmatifootwear.example.com",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/bagmatifootwearpoint" },
+      { label: "Shop", href: "https://shop.bagmatifootwear.example.com" },
+    ],
   },
   {
-    src: "/photos/new-road-2.jpg",
-    title: "New Road Heritage Walk",
-    category: "Community",
+    name: "Heritage Gift & Stationery",
+    category: "Gift & Stationery",
     description:
-      "An activity that connects commerce, local culture, and neighborhood identity through guided participation.",
+      "A small but visible market business offering school, office, and gift products with dependable local customer service.",
+    phone: "+977-9801200106",
+    address: "Khichapokhari Lane, Kathmandu",
+    image: "/business/gift-stationery.jpg",
+    badge: "Member Business",
+    socialLinks: [
+      { label: "Facebook", href: "https://facebook.com/heritagegiftstationery" },
+    ],
   },
-];
-
-export const gallerySummary = [
-  { label: "Featured Albums", value: "06" },
-  { label: "Photo Categories", value: "04" },
-  { label: "Interactive Lightbox", value: "Enabled" },
 ];
 
 export const contactDetails = [
@@ -522,6 +553,7 @@ export const advisoryMembers: MemberProfile[] = [
 
 export const adminNavItems = [
   { label: "Dashboard", href: "/admin", icon: "[]" },
+  { label: "Home Page", href: "/admin/home", icon: "H" },
   { label: "About", href: "/admin/about", icon: "A" },
   { label: "Members", href: "/admin/members", icon: "()" },
   { label: "Events", href: "/admin/events", icon: "o" },

@@ -14,8 +14,8 @@ from .models import (
     GeneralMember,
     GalleryItem,
     HeroSlide,
+    HomeHeroImage,
     MemberProfile,
-    MemberSubmission,
     OrganizationProfile,
     ServiceItem,
     SiteSettings,
@@ -68,9 +68,28 @@ class LoginSerializer(TokenObtainPairSerializer):
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
+    calendar_pdf_url = serializers.SerializerMethodField()
+
     class Meta:
         model = SiteSettings
         fields = "__all__"
+
+    def get_calendar_pdf_url(self, obj):
+        request = self.context.get("request")
+        if obj.calendar_pdf:
+            if request is not None:
+                return request.build_absolute_uri(obj.calendar_pdf.url)
+            return obj.calendar_pdf.url
+        return ""
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if request is not None and request.data.get("calendar_pdf_clear") in {"1", "true", "True"}:
+            if instance.calendar_pdf:
+                instance.calendar_pdf.delete(save=False)
+            instance.calendar_pdf = None
+
+        return super().update(instance, validated_data)
 
 
 class OrganizationProfileSerializer(serializers.ModelSerializer):
@@ -158,6 +177,33 @@ class HeroSlideSerializer(serializers.ModelSerializer):
     class Meta:
         model = HeroSlide
         fields = "__all__"
+
+
+class HomeHeroImageSerializer(serializers.ModelSerializer):
+    image_src = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HomeHeroImage
+        fields = (
+            "id",
+            "title",
+            "image",
+            "image_url",
+            "image_src",
+            "display_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def get_image_src(self, obj):
+        request = self.context.get("request")
+        if obj.image:
+            if request is not None:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return obj.image_url
 
 
 class ServiceItemSerializer(serializers.ModelSerializer):
@@ -293,7 +339,6 @@ class GalleryItemSerializer(serializers.ModelSerializer):
             "image_url",
             "image_src",
             "is_featured",
-            "show_in_slider",
             "display_order",
             "is_active",
             "created_at",
@@ -466,72 +511,6 @@ class BusinessShowcaseSubmissionSerializer(serializers.ModelSerializer):
             instance.image = None
 
         return super().update(instance, validated_data)
-
-
-class MemberSubmissionCreateSerializer(serializers.ModelSerializer):
-    photo = serializers.ImageField(required=True, allow_null=False)
-
-    class Meta:
-        model = MemberSubmission
-        fields = (
-            "id",
-            "submitter_name",
-            "submitter_email",
-            "submitter_phone",
-            "name",
-            "role",
-            "category",
-            "phone",
-            "email",
-            "note",
-            "photo",
-            "review_status",
-            "created_at",
-        )
-        read_only_fields = ("id", "review_status", "created_at")
-
-
-class MemberSubmissionSerializer(serializers.ModelSerializer):
-    photo_src = serializers.SerializerMethodField()
-
-    class Meta:
-        model = MemberSubmission
-        fields = (
-            "id",
-            "submitter_name",
-            "submitter_email",
-            "submitter_phone",
-            "name",
-            "role",
-            "category",
-            "phone",
-            "email",
-            "note",
-            "photo",
-            "photo_src",
-            "is_read",
-            "review_status",
-            "admin_notes",
-            "reviewed_at",
-            "published_member",
-            "created_at",
-            "updated_at",
-        )
-        read_only_fields = (
-            "id",
-            "created_at",
-            "updated_at",
-            "reviewed_at",
-            "published_member",
-        )
-
-    def get_photo_src(self, obj):
-        request = self.context.get("request")
-        if obj.photo:
-            if request is not None:
-                return request.build_absolute_uri(obj.photo.url)
-            return obj.photo.url
-        return ""
 
 
 class EventSerializer(serializers.ModelSerializer):

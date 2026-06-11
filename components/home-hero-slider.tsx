@@ -6,18 +6,27 @@ import type { HeroSlide } from "@/lib/site-data";
 
 export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [current, setCurrent] = useState(0);
+  const hasMultiple = slides.length > 1;
+
+  const goPrev = () =>
+    setCurrent((value) => (value - 1 + slides.length) % slides.length);
+  const goNext = () => setCurrent((value) => (value + 1) % slides.length);
 
   const showNext = useEffectEvent(() => {
     setCurrent((value) => (value + 1) % slides.length);
   });
 
   useEffect(() => {
+    if (!hasMultiple) {
+      return;
+    }
+
     const timer = window.setInterval(() => {
       showNext();
-    }, 5000);
+    }, 4000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [hasMultiple]);
 
   return (
     <div className="panel overflow-hidden rounded-[2rem]">
@@ -39,39 +48,43 @@ export function HomeHeroSlider({ slides }: { slides: HeroSlide[] }) {
             />
           </div>
         ))}
-      </div>
-      <div className="flex items-center justify-center gap-3 border-t border-line bg-white px-4 py-4">
-        <button
-          type="button"
-          onClick={() =>
-            setCurrent((value) => (value - 1 + slides.length) % slides.length)
-          }
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-lg font-semibold text-primary transition hover:bg-surface-muted"
-          aria-label="Previous slide"
-        >
-          {"\u2190"}
-        </button>
-        <div className="flex items-center gap-2">
-          {slides.map((slide, dotIndex) => (
+
+        {hasMultiple ? (
+          <>
             <button
-              key={slide.title}
               type="button"
-              onClick={() => setCurrent(dotIndex)}
-              className={`h-3 w-3 rounded-full transition ${
-                dotIndex === current ? "bg-primary" : "bg-slate-300"
-              }`}
-              aria-label={`Go to slide ${dotIndex + 1}`}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setCurrent((value) => (value + 1) % slides.length)}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line text-lg font-semibold text-primary transition hover:bg-surface-muted"
-          aria-label="Next slide"
-        >
-          {"\u2192"}
-        </button>
+              onClick={goPrev}
+              onMouseEnter={goPrev}
+              className="absolute left-4 top-1/2 z-10 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/80 text-xl font-semibold text-primary shadow-lg backdrop-blur transition hover:bg-white"
+              aria-label="Previous slide"
+            >
+              {"\u2190"}
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              onMouseEnter={goNext}
+              className="absolute right-4 top-1/2 z-10 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/80 text-xl font-semibold text-primary shadow-lg backdrop-blur transition hover:bg-white"
+              aria-label="Next slide"
+            >
+              {"\u2192"}
+            </button>
+
+            <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/25 px-3 py-2 backdrop-blur">
+              {slides.map((slide, dotIndex) => (
+                <button
+                  key={slide.title}
+                  type="button"
+                  onClick={() => setCurrent(dotIndex)}
+                  className={`h-2.5 w-2.5 rounded-full transition ${
+                    dotIndex === current ? "bg-white" : "bg-white/50 hover:bg-white/80"
+                  }`}
+                  aria-label={`Go to slide ${dotIndex + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

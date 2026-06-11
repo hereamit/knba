@@ -5,13 +5,12 @@ import { GalleryShowcase } from "@/components/gallery-showcase";
 import { SectionHeading } from "@/components/section-heading";
 import { API_BASE_URL } from "@/lib/api";
 import {
-  fallbackGalleryRecords,
   normalizeGalleryRecord,
   type GalleryRecord,
 } from "@/lib/gallery";
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<GalleryRecord[]>(fallbackGalleryRecords);
+  const [items, setItems] = useState<GalleryRecord[]>([]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -26,11 +25,11 @@ export default function GalleryPage() {
         }
 
         const data = (await response.json()) as GalleryRecord[];
-        if (!isCancelled && data.length) {
+        if (!isCancelled) {
           setItems(data.map(normalizeGalleryRecord));
         }
       } catch {
-        // Keep fallback records on the public page.
+        // Leave the gallery empty if the backend is unavailable.
       }
     };
 
@@ -71,7 +70,13 @@ export default function GalleryPage() {
       </section>
 
       <section className="py-20">
-        <GalleryShowcase items={items} />
+        {items.length ? (
+          <GalleryShowcase items={items} />
+        ) : (
+          <div className="rounded-[1.4rem] border border-dashed border-line bg-white px-5 py-10 text-center text-sm text-muted">
+            No gallery images are available yet.
+          </div>
+        )}
       </section>
     </div>
   );

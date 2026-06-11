@@ -4,6 +4,105 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { resolveGalleryImageSrc, type GalleryRecord } from "@/lib/gallery";
 
+function cardRotationClass(index: number) {
+  if (index % 3 === 0) {
+    return "-rotate-[1.3deg]";
+  }
+  if (index % 3 === 1) {
+    return "rotate-[1deg]";
+  }
+  return "-rotate-[0.6deg]";
+}
+
+type CategoryGroup = { category: string; items: GalleryRecord[] };
+
+function CategoryCard({
+  group,
+  index,
+  onOpen,
+}: {
+  group: CategoryGroup;
+  index: number;
+  onOpen: (category: string, itemIndex: number) => void;
+}) {
+  const items = group.items;
+  const count = items.length;
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const showPrevious = () => setCurrentIndex((value) => (value - 1 + count) % count);
+  const showNext = () => setCurrentIndex((value) => (value + 1) % count);
+
+  const safeIndex = currentIndex < count ? currentIndex : 0;
+  const current = items[safeIndex];
+
+  return (
+    <div
+      className={`group panel relative overflow-hidden rounded-[1.6rem] transition duration-300 hover:z-10 hover:-translate-y-1 ${cardRotationClass(index)}`}
+    >
+      <div className="pointer-events-none absolute left-5 top-5 z-40">
+        <p className="inline-flex rounded-full border border-white/14 bg-[#091224]/58 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-white/92 backdrop-blur-sm">
+          {group.category}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onOpen(group.category, safeIndex)}
+        className="relative block h-80 w-full overflow-hidden text-left"
+        aria-label={`Open ${group.category} gallery`}
+      >
+        {current ? (
+          <Image
+            key={current.id ?? safeIndex}
+            src={resolveGalleryImageSrc(current.image_src)}
+            alt={current.title}
+            fill
+            unoptimized
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#091224]/88 via-[#091224]/18 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+          <p className="mt-3 text-sm font-medium text-white/84">
+            {count} photo{count > 1 ? "s" : ""}
+          </p>
+        </div>
+      </button>
+
+      {count > 1 ? (
+        <>
+          <button
+            type="button"
+            onClick={showPrevious}
+            aria-label={`Previous image in ${group.category}`}
+            className="absolute left-3 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/35 text-lg text-white opacity-0 backdrop-blur transition pointer-events-none hover:bg-black/55 group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
+          >
+            {"←"}
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label={`Next image in ${group.category}`}
+            className="absolute right-3 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/35 text-lg text-white opacity-0 backdrop-blur transition pointer-events-none hover:bg-black/55 group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
+          >
+            {"→"}
+          </button>
+          <div className="pointer-events-none absolute bottom-5 right-5 z-30 flex items-center gap-1.5">
+            {items.map((item, dotIndex) => (
+              <span
+                key={item.id ?? dotIndex}
+                className={`h-1.5 rounded-full transition-all ${
+                  dotIndex === safeIndex ? "w-4 bg-white" : "w-1.5 bg-white/45"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function GalleryShowcase({ items }: { items: GalleryRecord[] }) {
   const categories = useMemo(
     () => ["All", ...new Set(items.map((item) => item.category))],
@@ -46,6 +145,11 @@ export function GalleryShowcase({ items }: { items: GalleryRecord[] }) {
   const closeLightbox = () => {
     setActiveCategory(null);
     setActiveIndex(null);
+  };
+
+  const openCategoryAt = (category: string, itemIndex: number) => {
+    setActiveCategory(category);
+    setActiveIndex(itemIndex);
   };
 
   const showPrevious = () => {
@@ -125,64 +229,14 @@ export function GalleryShowcase({ items }: { items: GalleryRecord[] }) {
 
       <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {selectedCategory === "All"
-          ? categoryGroups.map((group, index) => {
-          const previewItems = group.items.slice(0, 3);
-
-          return (
-          <button
-            type="button"
-            key={group.category}
-            onClick={() => {
-              setActiveCategory(group.category);
-              setActiveIndex(0);
-            }}
-            className={`group panel overflow-hidden rounded-[1.6rem] text-left transition duration-300 hover:z-10 hover:-translate-y-1 ${
-              index % 3 === 0
-                ? "-rotate-[1.3deg]"
-                : index % 3 === 1
-                  ? "rotate-[1deg]"
-                  : "-rotate-[0.6deg]"
-            }`}
-          >
-            <div className="absolute left-5 top-5 z-40">
-              <p className="inline-flex rounded-full border border-white/14 bg-[#091224]/58 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-white/92 backdrop-blur-sm">
-                {group.category}
-              </p>
-            </div>
-            <div className="relative h-80 overflow-hidden">
-              {previewItems
-                .slice()
-                .reverse()
-                .map((item, stackIndex) => (
-                  <div
-                    key={item.id ?? `${group.category}-${stackIndex}`}
-                    className={`absolute inset-0 transition duration-300 ${
-                      stackIndex === previewItems.length - 1
-                        ? "z-30 group-hover:scale-105"
-                        : stackIndex === previewItems.length - 2
-                          ? "z-20 translate-x-2 translate-y-2 rotate-[2deg] opacity-90"
-                          : "z-10 translate-x-4 translate-y-4 rotate-[-2deg] opacity-75"
-                    }`}
-                  >
-                    <Image
-                      src={resolveGalleryImageSrc(item.image_src)}
-                      alt={item.title}
-                      fill
-                      unoptimized
-                      className="rounded-[1.2rem] object-cover"
-                    />
-                  </div>
-                ))}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#091224]/88 via-[#091224]/18 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                <p className="mt-3 text-sm font-medium text-white/84">
-                  {group.items.length} photo{group.items.length > 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
-          </button>
-          );
-        })
+          ? categoryGroups.map((group, index) => (
+              <CategoryCard
+                key={group.category}
+                group={group}
+                index={index}
+                onOpen={openCategoryAt}
+              />
+            ))
           : selectedCategoryItems.map((item, index) => (
               <button
                 type="button"
@@ -273,7 +327,7 @@ export function GalleryShowcase({ items }: { items: GalleryRecord[] }) {
                   <div className="flex gap-3 overflow-x-auto pb-1">
                     {activeCategoryItems.map((item, index) => (
                       <button
-                        key={item.title}
+                        key={item.id ?? item.title}
                         type="button"
                         onClick={() => setActiveIndex(index)}
                         className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-[1rem] border transition ${

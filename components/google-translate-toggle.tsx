@@ -116,8 +116,7 @@ export function GoogleTranslateToggle() {
 
       <div
         ref={panelRef}
-        translate="no"
-        className={`notranslate fixed right-0 top-24 z-40 transition-transform duration-300 ${
+        className={`fixed right-0 top-24 z-40 transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-[calc(100%-2.25rem)]"
         }`}
       >

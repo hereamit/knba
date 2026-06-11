@@ -134,46 +134,24 @@ type BusinessSubmissionPreview = {
   is_read: boolean;
 };
 
-type MemberSubmissionPreview = {
-  id: number;
-  submitter_name: string;
-  name: string;
-  role: string;
-  note: string;
-  created_at: string;
-  review_status: string;
-  is_read: boolean;
-};
-
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile } = useOrganizationProfile();
   const adminNavigation = useMemo(
     () =>
-      adminNavItems.map((item) => {
-        if (item.label === "Members") {
-          return {
-            ...item,
-            children: [
-              { label: "Term", href: "/admin/members/terms", icon: "+" },
-              { label: "Member", href: "/admin/members/members", icon: "+" },
-              { label: "General Member", href: "/admin/members/general-members", icon: "+" },
-            ],
-          };
-        }
-        if (item.label === "Messages") {
-          return {
-            ...item,
-            children: [
-              { label: "General Inquiry", href: "/admin/messages/contact", icon: "•" },
-              { label: "Business Ad", href: "/admin/messages/business", icon: "•" },
-              { label: "Member Submission", href: "/admin/messages/members", icon: "•" },
-            ],
-          };
-        }
-        return item;
-      }),
+      adminNavItems.map((item) =>
+        item.label === "Members"
+          ? {
+              ...item,
+              children: [
+                { label: "Term", href: "/admin/members/terms", icon: "+" },
+                { label: "Member", href: "/admin/members/members", icon: "+" },
+                { label: "General Member", href: "/admin/members/general-members", icon: "+" },
+              ],
+            }
+          : item,
+      ),
     [],
   );
   const [hydrated, setHydrated] = useState(false);
@@ -270,7 +248,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
     const loadAdminState = async () => {
       try {
-        const [user, messages, businessSubmissions, memberSubmissions] = await Promise.all([
+        const [user, messages, businessSubmissions] = await Promise.all([
           apiRequest<AdminSession["user"]>("/auth/me/", {
             token: accessToken,
           }),
@@ -283,12 +261,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
               token: accessToken,
             },
           ),
-          apiRequest<MemberSubmissionPreview[]>(
-            "/member-submissions/?status=pending",
-            {
-              token: accessToken,
-            },
-          ).catch(() => [] as MemberSubmissionPreview[]),
         ]);
 
         if (isCancelled) {
@@ -326,18 +298,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
               href: `/admin/messages/business/${submission.id}`,
               createdAt: submission.created_at,
             })),
-            ...memberSubmissions.map((submission) => ({
-              id: `member-${submission.id}`,
-              name: submission.submitter_name,
-              topic: `Member Submission: ${submission.name}`,
-              date: formatDate.format(new Date(submission.created_at)),
-              message:
-                submission.note ||
-                `Proposed ${submission.role || "member"} pending review`,
-              isRead: submission.is_read,
-              href: `/admin/messages/members`,
-              createdAt: submission.created_at,
-            })),
           ]
             .filter((message) => !message.isRead)
             .sort(
@@ -367,13 +327,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     };
 
     void loadAdminState();
-    const pollHandle = window.setInterval(() => {
-      void loadAdminState();
-    }, 30000);
 
     return () => {
       isCancelled = true;
-      window.clearInterval(pollHandle);
     };
   }, [accessToken, pathname, router]);
 
@@ -429,7 +385,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       color: "var(--admin-header-text)",
                     }}
                   >
-                    profile.short_name.slice(0, 1)
+                    {profile.short_name.slice(0, 1)}
                   </div>
                 )}
                 {!sidebarCollapsed ? (
@@ -499,7 +455,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         {!sidebarCollapsed ? <span>{item.label}</span> : null}
                       </Link>
 
-                      {!sidebarCollapsed && childItems.length && pathname.startsWith(item.href) ? (
+                      {!sidebarCollapsed && childItems.length && pathname.startsWith("/admin/members") ? (
                         <div className="space-y-1 pl-5">
                           {childItems.map((child) => {
                             const isChildActive = pathname === child.href;

@@ -6,10 +6,6 @@ export type SiteSettingsRecord = {
   office_address: string;
   office_phone: string;
   office_email: string;
-  about_eyebrow: string;
-  about_title: string;
-  about_quote: string;
-  about_quote_label: string;
   history_text: string;
   founder_name: string;
   founder_title: string;
@@ -22,6 +18,18 @@ export type SiteSettingsRecord = {
   mission_text: string;
   vision_text: string;
   map_embed_url: string;
+  calendar_pdf_url: string;
+  home_about_eyebrow: string;
+  home_about_title: string;
+  home_services_eyebrow: string;
+  home_services_title: string;
+  home_services_description: string;
+  home_business_eyebrow: string;
+  home_business_title: string;
+  home_business_description: string;
+  home_gallery_eyebrow: string;
+  home_gallery_title: string;
+  home_gallery_description: string;
 };
 
 export const defaultSiteSettings: SiteSettingsRecord = {
@@ -30,11 +38,6 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   office_address: "Khichapokhari, New Road, Kathmandu",
   office_phone: "+977-1-5350000",
   office_email: "secretariat@knba.org.np",
-  about_eyebrow: "About Us",
-  about_title: "Who we are and what KNBA stands for.",
-  about_quote:
-    "Together, the merchants of Khichapokhari and New Road can shape a market that's organized, fair, and worthy of its history.",
-  about_quote_label: "Founding Vision",
   history_text: siteHistory,
   founder_name: "Hari Krishna Tuladhar",
   founder_title: "Founder Chair",
@@ -51,7 +54,28 @@ export const defaultSiteSettings: SiteSettingsRecord = {
     "Create a well-managed, trusted, and future-ready business district in Khichapokhari and New Road.",
   map_embed_url:
     "https://www.google.com/maps?q=Khichapokhari%20New%20Road%20Kathmandu&output=embed",
+  calendar_pdf_url: "",
+  home_about_eyebrow: "About KNBA",
+  home_about_title:
+    "KNBA builds a unified business voice for Khichapokhari and New Road.",
+  home_services_eyebrow: "Core Services",
+  home_services_title: "Practical support that makes day-to-day business easier.",
+  home_services_description:
+    "These service cards now come from the live KNBA service records managed in the portal.",
+  home_business_eyebrow: "Business Showcase",
+  home_business_title: "Promoted businesses that help support KNBA operations.",
+  home_business_description:
+    "This sponsored directory gives member businesses a stronger public presence while creating a practical fundraising stream for the association.",
+  home_gallery_eyebrow: "Gallery",
+  home_gallery_title:
+    "Moments from events, market coordination, and member programs.",
+  home_gallery_description:
+    "A snapshot of KNBA activities across meetings, celebrations, training sessions, and collaboration on New Road.",
 };
+
+function pickSettingText(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
 
 export function normalizeSiteSettingsRecord(
   record: Partial<SiteSettingsRecord>,
@@ -77,22 +101,6 @@ export function normalizeSiteSettingsRecord(
       typeof record.office_email === "string" && record.office_email.trim()
         ? record.office_email
         : defaultSiteSettings.office_email,
-    about_eyebrow:
-      typeof record.about_eyebrow === "string" && record.about_eyebrow.trim()
-        ? record.about_eyebrow
-        : defaultSiteSettings.about_eyebrow,
-    about_title:
-      typeof record.about_title === "string" && record.about_title.trim()
-        ? record.about_title
-        : defaultSiteSettings.about_title,
-    about_quote:
-      typeof record.about_quote === "string" && record.about_quote.trim()
-        ? record.about_quote
-        : defaultSiteSettings.about_quote,
-    about_quote_label:
-      typeof record.about_quote_label === "string" && record.about_quote_label.trim()
-        ? record.about_quote_label
-        : defaultSiteSettings.about_quote_label,
     history_text:
       typeof record.history_text === "string" && record.history_text.trim()
         ? record.history_text
@@ -147,5 +155,53 @@ export function normalizeSiteSettingsRecord(
       typeof record.map_embed_url === "string" && record.map_embed_url.trim()
         ? record.map_embed_url
         : defaultSiteSettings.map_embed_url,
+    calendar_pdf_url:
+      typeof (record as { calendar_pdf_url?: string }).calendar_pdf_url === "string"
+        ? (record as { calendar_pdf_url: string }).calendar_pdf_url
+        : "",
+    home_about_eyebrow: pickSettingText(
+      record.home_about_eyebrow,
+      defaultSiteSettings.home_about_eyebrow,
+    ),
+    home_about_title: pickSettingText(
+      record.home_about_title,
+      defaultSiteSettings.home_about_title,
+    ),
+    home_services_eyebrow: pickSettingText(
+      record.home_services_eyebrow,
+      defaultSiteSettings.home_services_eyebrow,
+    ),
+    home_services_title: pickSettingText(
+      record.home_services_title,
+      defaultSiteSettings.home_services_title,
+    ),
+    home_services_description: pickSettingText(
+      record.home_services_description,
+      defaultSiteSettings.home_services_description,
+    ),
+    home_business_eyebrow: pickSettingText(
+      record.home_business_eyebrow,
+      defaultSiteSettings.home_business_eyebrow,
+    ),
+    home_business_title: pickSettingText(
+      record.home_business_title,
+      defaultSiteSettings.home_business_title,
+    ),
+    home_business_description: pickSettingText(
+      record.home_business_description,
+      defaultSiteSettings.home_business_description,
+    ),
+    home_gallery_eyebrow: pickSettingText(
+      record.home_gallery_eyebrow,
+      defaultSiteSettings.home_gallery_eyebrow,
+    ),
+    home_gallery_title: pickSettingText(
+      record.home_gallery_title,
+      defaultSiteSettings.home_gallery_title,
+    ),
+    home_gallery_description: pickSettingText(
+      record.home_gallery_description,
+      defaultSiteSettings.home_gallery_description,
+    ),
   };
 }

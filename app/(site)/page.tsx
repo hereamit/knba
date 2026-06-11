@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { HomeHeroSlider } from "@/components/home-hero-slider";
-import { useOrganizationProfile } from "@/components/organization-profile-provider";
 import { SectionHeading } from "@/components/section-heading";
 import { API_BASE_URL } from "@/lib/api";
 import {
@@ -18,12 +17,15 @@ import {
   type BusinessShowcaseRecord,
 } from "@/lib/business-showcase";
 import {
-  fallbackGalleryRecords,
-  mapGalleryRecordsToSlider,
   normalizeGalleryRecord,
   resolveGalleryImageSrc,
   type GalleryRecord,
 } from "@/lib/gallery";
+import {
+  mapHomeHeroImagesToSlider,
+  normalizeHomeHeroImageRecord,
+  type HomeHeroImageRecord,
+} from "@/lib/home-hero";
 import {
   fallbackServiceRecords,
   normalizeServiceRecord,
@@ -45,8 +47,8 @@ function summarizeText(value: string, maxLength = 120) {
 }
 
 export default function HomePage() {
-  const { profile } = useOrganizationProfile();
   const [about, setAbout] = useState<AboutPageRecord>(defaultAboutPageRecord);
+  const [heroImages, setHeroImages] = useState<HomeHeroImageRecord[]>([]);
   const [galleryRecords, setGalleryRecords] = useState<GalleryRecord[]>([]);
   const [businessRecords, setBusinessRecords] = useState<BusinessShowcaseRecord[]>([]);
   const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
@@ -56,13 +58,19 @@ export default function HomePage() {
 
     const loadHomepageContent = async () => {
       try {
-        const [aboutResponse, galleryResponse, servicesResponse, businessResponse] =
-          await Promise.all([
-            fetch(`${API_BASE_URL}/about-page/`, { cache: "no-store" }),
-            fetch(`${API_BASE_URL}/gallery/`, { cache: "no-store" }),
-            fetch(`${API_BASE_URL}/services/`, { cache: "no-store" }),
-            fetch(`${API_BASE_URL}/business-showcase/`, { cache: "no-store" }),
-          ]);
+        const [
+          aboutResponse,
+          heroResponse,
+          galleryResponse,
+          servicesResponse,
+          businessResponse,
+        ] = await Promise.all([
+          fetch(`${API_BASE_URL}/about-page/`, { cache: "no-store" }),
+          fetch(`${API_BASE_URL}/home-hero-images/`, { cache: "no-store" }),
+          fetch(`${API_BASE_URL}/gallery/`, { cache: "no-store" }),
+          fetch(`${API_BASE_URL}/services/`, { cache: "no-store" }),
+          fetch(`${API_BASE_URL}/business-showcase/`, { cache: "no-store" }),
+        ]);
 
         if (isCancelled) {
           return;
@@ -70,6 +78,15 @@ export default function HomePage() {
 
         if (aboutResponse.ok) {
           setAbout(normalizeAboutPageRecord(await aboutResponse.json()));
+        }
+
+        if (heroResponse.ok) {
+          const heroData = (await heroResponse.json()) as HomeHeroImageRecord[];
+          setHeroImages(
+            heroData
+              .map(normalizeHomeHeroImageRecord)
+              .filter((item) => item.is_active && item.image_src),
+          );
         }
 
         if (galleryResponse.ok) {
@@ -170,22 +187,22 @@ export default function HomePage() {
     [about],
   );
 
-  const sliderSlides = mapGalleryRecordsToSlider(galleryRecords);
+  const heroImageSlides = mapHomeHeroImagesToSlider(heroImages);
   const galleryPreviewItems = galleryRecords.filter((item) => item.is_featured);
   const previewGrid = (galleryPreviewItems.length ? galleryPreviewItems : galleryRecords).slice(0, 4);
-  const highlightImage = galleryPreviewItems[0] ?? galleryRecords[0] ?? fallbackGalleryRecords[0];
+  const highlightImage = galleryPreviewItems[0] ?? galleryRecords[0] ?? null;
   const businessCards = businessRecords.map(mapBusinessShowcaseRecordToCard);
   const homepageServices = (serviceRecords.length ? serviceRecords : fallbackServiceRecords).slice(0, 3);
 
   return (
     <div className="pb-20">
-      {sliderSlides.length ? (
+      {heroImageSlides.length ? (
         <section className="section-wrap pt-6 md:pt-10">
-          <HomeHeroSlider slides={sliderSlides} />
+          <HomeHeroSlider slides={heroImageSlides} />
         </section>
       ) : null}
 
-      <section className="section-wrap relative z-10 mt-4 md:-mt-2">
+      <section className="section-wrap mt-6 md:mt-8">
         <div className="grid gap-4 md:grid-cols-4">
           {statCards.map((stat) => (
             <article key={stat.label} className="panel rounded-[1.5rem] p-6">
@@ -202,8 +219,8 @@ export default function HomePage() {
       <section className="section-wrap grid gap-10 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div>
           <SectionHeading
-            eyebrow="About KNBA"
-            title={`${profile.short_name || about.settings.short_name} builds a unified business voice for Khichapokhari and New Road.`}
+            eyebrow={about.settings.home_about_eyebrow}
+            title={about.settings.home_about_title}
             description={about.settings.history_text}
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -230,13 +247,17 @@ export default function HomePage() {
         </div>
         <div className="panel relative overflow-hidden rounded-[2rem] p-4">
           <div className="relative h-[360px] overflow-hidden rounded-[1.5rem] md:h-[420px]">
-            <Image
-              src={resolveGalleryImageSrc(highlightImage.image_src)}
-              alt={highlightImage.title}
-              fill
-              unoptimized
-              className="object-cover object-center"
-            />
+            {highlightImage ? (
+              <Image
+                src={resolveGalleryImageSrc(highlightImage.image_src)}
+                alt={highlightImage.title}
+                fill
+                unoptimized
+                className="object-cover object-center"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#dbe7ff,#b9cfff)]" />
+            )}
           </div>
         </div>
       </section>
@@ -244,9 +265,9 @@ export default function HomePage() {
       <section className="bg-[#eef3ff] py-20">
         <div className="section-wrap">
           <SectionHeading
-            eyebrow="Core Services"
-            title="Practical support that makes day-to-day business easier."
-            description="These service cards now come from the live KNBA service records managed in the portal."
+            eyebrow={about.settings.home_services_eyebrow}
+            title={about.settings.home_services_title}
+            description={about.settings.home_services_description}
           />
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {homepageServices.map((service, index) => {
@@ -313,9 +334,9 @@ export default function HomePage() {
       <section className="section-wrap py-20">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeading
-            eyebrow="Business Showcase"
-            title="Promoted businesses that help support KNBA operations."
-            description="This sponsored directory gives member businesses a stronger public presence while creating a practical fundraising stream for the association."
+            eyebrow={about.settings.home_business_eyebrow}
+            title={about.settings.home_business_title}
+            description={about.settings.home_business_description}
           />
           <Link className="btn-primary" href="/business-showcase">
             View All Businesses
@@ -371,9 +392,9 @@ export default function HomePage() {
       <section className="section-wrap py-20">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeading
-            eyebrow="Gallery"
-            title="Moments from events, market coordination, and member programs."
-            description="A snapshot of KNBA activities across meetings, celebrations, training sessions, and collaboration on New Road."
+            eyebrow={about.settings.home_gallery_eyebrow}
+            title={about.settings.home_gallery_title}
+            description={about.settings.home_gallery_description}
           />
           <Link className="btn-primary" href="/gallery">
             View Full Gallery

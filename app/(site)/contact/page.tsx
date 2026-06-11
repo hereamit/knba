@@ -7,6 +7,7 @@ import { resolveOrganizationMapEmbedSrc } from "@/lib/organization-profile";
 
 export default function ContactPage() {
   const { profile } = useOrganizationProfile();
+  const mapEmbedSrc = resolveOrganizationMapEmbedSrc(profile.map_embed_url);
 
   const contactDetails = [
     {
@@ -54,13 +55,20 @@ export default function ContactPage() {
       <section className="py-20">
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="overflow-hidden rounded-[1.8rem] border border-line bg-white shadow-[0_18px_42px_rgba(18,31,69,0.08)]">
-            <iframe
-              title={`${profile.short_name} Location Map`}
-              src={resolveOrganizationMapEmbedSrc(profile.map_embed_url)}
-              className="h-[420px] w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            {mapEmbedSrc ? (
+              <iframe
+                title={`${profile.short_name} Location Map`}
+                src={mapEmbedSrc}
+                className="h-[420px] w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            ) : (
+              <div className="flex h-[420px] w-full items-center justify-center bg-slate-50 px-6 text-center text-sm text-muted">
+                Location map has not been configured. Add a Google Maps embed in
+                the Organization Profile settings.
+              </div>
+            )}
           </div>
           <div>
             <SectionHeading
