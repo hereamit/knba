@@ -8,7 +8,8 @@
       "Bash(./venv/Scripts/python.exe manage.py showmigrations api)",
       "Bash(./venv/Scripts/python.exe manage.py migrate api)",
       "Bash(./venv/Scripts/python.exe manage.py dbshell -- -c \"\\\\d api_sitesettings\")",
-      "Bash(./venv/Scripts/python.exe manage.py shell -c \"from django.db import connection; cur = connection.cursor\\(\\); cur.execute\\('ALTER TABLE api_sitesettings ADD COLUMN IF NOT EXISTS member_submissions_open boolean NOT NULL DEFAULT false'\\); print\\('column added'\\)\")"
+      "Bash(./venv/Scripts/python.exe manage.py shell -c \"from django.db import connection; cur = connection.cursor\\(\\); cur.execute\\('ALTER TABLE api_sitesettings ADD COLUMN IF NOT EXISTS member_submissions_open boolean NOT NULL DEFAULT false'\\); print\\('column added'\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/pdfjs-dist/package.json'\\).version\\)\")"
     ]
   }
 }
