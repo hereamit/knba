@@ -58,6 +58,9 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
